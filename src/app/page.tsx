@@ -1,131 +1,21 @@
 import { db } from "@/db";
-import { orders } from "@/db/schema";
-import { sql, gte, and, desc } from "drizzle-orm";
-import { ShoppingBag, TrendingUp, Clock, AlertCircle } from "lucide-react";
-import { format, startOfMonth } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { ingredients, orders } from "@/db/schema";
+import { money, numberValue, shortDate } from "@/lib/format";
+import { and, asc, desc, gte, sql } from "drizzle-orm";
 import Link from "next/link";
-
+import { CalendarClock, Package, Plus, Sparkles, TrendingUp, WalletCards } from "lucide-react";
 export default async function DashboardPage() {
-  const today = new Date().toISOString().split('T')[0];
-  
-  const pendingOrders = await db.select()
-    .from(orders)
-    .where(and(sql`${orders.status} = 'pending'`, gte(orders.deliveryDate, today)))
-    .orderBy(orders.deliveryDate);
-
-  const stats = await db.select({
-    count: sql<number>`count(*)`,
-    total: sql<number>`sum(${orders.totalAmount})`
-  }).from(orders).where(gte(orders.createdAt, startOfMonth(new Date())));
-
-  const monthlyRevenue = stats[0]?.total || 0;
-  const monthlyCount = stats[0]?.count || 0;
-
-  return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-800">Boas-vindas! 🍬</h1>
-        <p className="text-gray-500">Aqui está o resumo do seu negócio de doces.</p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border flex items-center space-x-4">
-          <div className="bg-pink-100 p-3 rounded-lg">
-            <TrendingUp className="w-6 h-6 text-pink-600" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 font-medium">Faturamento (Mês)</p>
-            <p className="text-2xl font-bold text-gray-800">R$ {Number(monthlyRevenue).toFixed(2)}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border flex items-center space-x-4">
-          <div className="bg-blue-100 p-3 rounded-lg">
-            <ShoppingBag className="w-6 h-6 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 font-medium">Pedidos (Mês)</p>
-            <p className="text-2xl font-bold text-gray-800">{monthlyCount}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border flex items-center space-x-4">
-          <div className="bg-yellow-100 p-3 rounded-lg">
-            <Clock className="w-6 h-6 text-yellow-600" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 font-medium">Aguardando Entrega</p>
-            <p className="text-2xl font-bold text-gray-800">{pendingOrders.length}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Upcoming Deliveries */}
-        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-          <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
-            <h2 className="font-bold text-gray-700 flex items-center">
-              <AlertCircle className="w-5 h-5 mr-2 text-pink-500" />
-              Próximas Entregas
-            </h2>
-            <Link href="/pedidos" className="text-xs text-pink-600 font-bold hover:underline">Ver todos</Link>
-          </div>
-          <div className="divide-y">
-            {pendingOrders.slice(0, 5).map((order) => (
-              <div key={order.id} className="p-4 hover:bg-gray-50 transition-colors flex justify-between items-center">
-                <div>
-                  <p className="font-bold text-gray-800">{order.customerName}</p>
-                  <p className="text-xs text-gray-500">
-                    {format(new Date(order.deliveryDate), "dd 'de' MMMM", { locale: ptBR })}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-pink-600">R$ {parseFloat(order.totalAmount || "0").toFixed(2)}</p>
-                  <span className="text-[10px] bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full font-bold">Pendente</span>
-                </div>
-              </div>
-            ))}
-            {pendingOrders.length === 0 && (
-              <div className="p-8 text-center text-gray-400 italic">
-                Nenhuma entrega pendente por enquanto.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Quick Actions / Tips */}
-        <div className="space-y-6">
-          <div className="bg-gradient-to-br from-pink-500 to-rose-600 p-6 rounded-xl text-white shadow-lg">
-            <h3 className="text-lg font-bold mb-2">Dica de Markup 💡</h3>
-            <p className="text-pink-100 text-sm mb-4">
-              Lembre-se de considerar embalagens e fitas no custo de cada receita para não perder margem!
-            </p>
-            <Link 
-              href="/ingredientes" 
-              className="inline-block bg-white text-pink-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-pink-50 transition-colors"
-            >
-              Cadastrar Embalagem
-            </Link>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-sm border">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">Acesso Rápido</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <Link href="/pedidos/novo" className="p-4 border rounded-lg text-center hover:bg-pink-50 hover:border-pink-200 transition-all group">
-                <ShoppingBag className="w-6 h-6 mx-auto mb-2 text-gray-400 group-hover:text-pink-500" />
-                <span className="text-sm font-medium text-gray-600">Novo Pedido</span>
-              </Link>
-              <Link href="/receitas/nova" className="p-4 border rounded-lg text-center hover:bg-pink-50 hover:border-pink-200 transition-all group">
-                <Clock className="w-6 h-6 mx-auto mb-2 text-gray-400 group-hover:text-pink-500" />
-                <span className="text-sm font-medium text-gray-600">Nova Receita</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  const today = new Date().toISOString().split("T")[0];
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const stats = await db.select({ count: sql<number>`count(*)`, total: sql<string>`coalesce(sum(${orders.totalAmount}), 0)` }).from(orders).where(gte(orders.createdAt, monthStart));
+  const upcoming = await db.select().from(orders).where(and(gte(orders.deliveryDate, today), sql`${orders.status} <> 'cancelled'`)).orderBy(asc(orders.deliveryDate)).limit(8);
+  const lowStock = await db.select().from(ingredients).orderBy(asc(ingredients.purchaseQuantity)).limit(6);
+  const revenue = numberValue(stats[0]?.total);
+  const cards = [
+    { title: "Faturamento do mês", value: money(revenue), icon: TrendingUp, tone: "bg-rose-50 text-rose-600" },
+    { title: "Lucro estimado", value: money(revenue * 0.45), icon: WalletCards, tone: "bg-emerald-50 text-emerald-600" },
+    { title: "Encomendas pendentes", value: String(upcoming.length), icon: CalendarClock, tone: "bg-violet-50 text-violet-600" },
+    { title: "Itens para conferir", value: String(lowStock.length), icon: Package, tone: "bg-amber-50 text-amber-600" },
+  ];
+  return <div className="space-y-8"><section className="rounded-[2rem] border border-rose-100 bg-white/80 p-6 shadow-xl shadow-rose-100/40 md:p-8"><div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between"><div><div className="mb-3 inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1 text-xs font-black uppercase tracking-widest text-rose-500"><Sparkles className="h-3.5 w-3.5" /> Painel principal</div><h1 className="text-3xl font-black tracking-tight text-slate-950 md:text-5xl">Doces Gourmet da Ana</h1><p className="mt-3 text-slate-500">Controle encomendas, receitas, custos, estoque e financeiro em um só lugar.</p></div><Link href="/pedidos/novo" className="inline-flex items-center justify-center rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-lg transition hover:bg-rose-600"><Plus className="mr-2 h-5 w-5" /> Nova encomenda</Link></div></section><section className="grid gap-4 md:grid-cols-4">{cards.map((card) => <div key={card.title} className="rounded-[1.7rem] border border-white bg-white p-5 shadow-sm"><div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-2xl ${card.tone}`}><card.icon className="h-5 w-5" /></div><p className="text-xs font-bold uppercase tracking-widest text-slate-400">{card.title}</p><p className="mt-2 text-2xl font-black text-slate-950">{card.value}</p></div>)}</section><section className="grid gap-6 lg:grid-cols-[1.4fr_.8fr]"><div className="rounded-[2rem] bg-white p-5 shadow-sm"><div className="mb-5 flex items-center justify-between"><div><h2 className="text-xl font-black text-slate-950">Próximas encomendas</h2><p className="text-sm text-slate-500">Pedidos com data de entrega a partir de hoje.</p></div><Link href="/pedidos" className="text-sm font-black text-rose-500">Ver todos</Link></div><div className="space-y-3">{upcoming.map((order) => <Link href={`/pedidos/${order.id}`} key={order.id} className="flex items-center justify-between rounded-3xl border border-slate-100 bg-slate-50/70 p-4 hover:bg-rose-50/60"><div><p className="font-black text-slate-950">{order.customerName}</p><p className="text-sm text-slate-500">{shortDate(order.deliveryDate)} • {order.customerPhone || "sem telefone"}</p></div><div className="text-right"><p className="font-black text-rose-600">{money(order.totalAmount)}</p><p className="text-xs font-bold uppercase text-slate-400">{order.status}</p></div></Link>)}{upcoming.length === 0 && <p className="rounded-3xl bg-slate-50 p-8 text-center text-sm text-slate-400">Nenhuma encomenda pendente.</p>}</div></div><div className="rounded-[2rem] bg-white p-5 shadow-sm"><h2 className="mb-5 text-xl font-black text-slate-950">Estoque para conferir</h2><div className="space-y-3">{lowStock.map((item) => <div key={item.id} className="rounded-3xl border border-slate-100 p-4"><div className="flex items-center justify-between"><p className="font-black text-slate-900">{item.name}</p><p className="text-sm font-black text-rose-600">{numberValue(item.purchaseQuantity).toLocaleString("pt-BR")} {item.unit}</p></div><p className="mt-1 text-xs text-slate-400">Custo: {money(item.costPerUnit)} por {item.unit}</p></div>)}</div></div></section></div>;
 }

@@ -1,26 +1,4 @@
 "use client";
-
 import { updateOrderStatus } from "./actions";
-
-export default function StatusSelect({ id, currentStatus }: { id: number, currentStatus: string }) {
-  const statusLabels: Record<string, string> = {
-    pending: "Pendente",
-    confirmed: "Confirmado",
-    delivered: "Entregue",
-    cancelled: "Cancelado",
-  };
-
-  return (
-    <select 
-      defaultValue={currentStatus}
-      onChange={async (e) => {
-         await updateOrderStatus(id, e.target.value);
-      }}
-      className="text-xs border rounded p-1 bg-white"
-    >
-      {Object.entries(statusLabels).map(([value, label]) => (
-        <option key={value} value={value}>{label}</option>
-      ))}
-    </select>
-  );
-}
+const options = [{ value: "pending", label: "Orçamento" }, { value: "confirmed", label: "Confirmado" }, { value: "production", label: "Em produção" }, { value: "finished", label: "Finalizado" }, { value: "delivered", label: "Entregue" }, { value: "cancelled", label: "Cancelado" }];
+export default function StatusSelect({ id, currentStatus }: { id: number; currentStatus: string }) { return <select defaultValue={currentStatus} onChange={async (e) => updateOrderStatus(id, e.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 outline-none">{options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select>; }

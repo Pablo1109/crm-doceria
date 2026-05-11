@@ -6,8 +6,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { addIngredientToRecipe, removeIngredientFromRecipe } from "@/app/receitas/actions";
 
-export default async function ReceitaDetailPage({ params }: { params: { id: string } }) {
-  const recipeId = parseInt(params.id);
+export default async function ReceitaDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const recipeId = parseInt(id);
   
   const recipe = await db.query.recipes.findFirst({
     where: eq(recipes.id, recipeId),
