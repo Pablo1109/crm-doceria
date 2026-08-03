@@ -1,7 +1,8 @@
 import { db } from "@/db";
 import { ingredients } from "@/db/schema";
 import { addIngredient, deleteIngredient } from "./actions";
-import { Boxes, Plus, Trash2 } from "lucide-react";
+import { Boxes, Plus, Trash2, Edit } from "lucide-react";
+import Link from "next/link";
 import { asc } from "drizzle-orm";
 import { money, numberValue } from "@/lib/format";
 import SubmitButton from "@/components/SubmitButton";
@@ -66,6 +67,10 @@ export default async function IngredientesPage({ searchParams }: { searchParams?
               <input name="minimumStock" type="number" step="0.01" className="mt-2 w-full rounded-2xl border border-[#ead8cf] px-4 py-3" placeholder="Ex: 1000" />
             </label>
 
+            <label className="block text-xs font-black uppercase tracking-wider text-[#9a6d5c]">Estoque mínimo por embalagem
+              <input name="minimumPackageCount" type="number" step="0.01" className="mt-2 w-full rounded-2xl border border-[#ead8cf] px-4 py-3" placeholder="Ex: 10" />
+            </label>
+
             <div className="rounded-2xl bg-[#fff1f4] p-4 text-sm leading-6 text-[#7b4b3f]">
               Exemplo certo: <b>Leite condensado</b> → embalagem <b>caixa</b> → medida <b>g</b> → conteúdo <b>395</b>. Se for 1kg, coloque medida <b>g</b> e conteúdo <b>1000</b>.
             </div>
@@ -103,12 +108,15 @@ export default async function IngredientesPage({ searchParams }: { searchParams?
                     <td className="px-6 py-4 text-sm font-black text-[#c98b9b]">
                       {money(item.costPerUnit)} / {item.unit}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right flex gap-2 justify-end">
                       <form action={async () => { "use server"; await deleteIngredient(item.id); }}>
                         <SubmitButton pendingText="" className="rounded-xl p-2 text-red-400 hover:bg-red-50 hover:text-red-600" >
                           <Trash2 className="h-5 w-5" />
                         </SubmitButton>
                       </form>
+                      <Link href={`/ingredientes/edit/${item.id}`} className="rounded-xl p-2 text-blue-500 hover:bg-blue-50 hover:text-blue-600" >
+                        <Edit className="h-5 w-5" />
+                      </Link>
                     </td>
                   </tr>
                 ))}

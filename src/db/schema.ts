@@ -9,6 +9,7 @@ export const ingredients = pgTable("ingredients", {
   purchaseQuantity: numeric("purchase_quantity", { precision: 10, scale: 2 }).notNull(), // quanto vem dentro de 1 embalagem
   costPerUnit: numeric("cost_per_unit", { precision: 10, scale: 4 }).notNull(), // custo estimado por unidade base
   minimumStock: numeric("minimum_stock", { precision: 10, scale: 2 }).default("0"),
+  minimumPackageCount: numeric("minimum_package_count", { precision: 10, scale: 2 }).default("0"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 

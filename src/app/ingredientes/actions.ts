@@ -23,6 +23,7 @@ export async function addIngredient(formData: FormData) {
   const minimumStock = n(formData.get("minimumStock"));
   if (!name || purchaseQuantity <= 0) return;
   const costPerUnit = purchasePrice > 0 ? purchasePrice / purchaseQuantity : 0;
+  const minimumPackageCount = n(formData.get("minimumPackageCount"));
   await db.insert(ingredients).values({
     name,
     unit,
@@ -31,6 +32,7 @@ export async function addIngredient(formData: FormData) {
     purchaseQuantity: purchaseQuantity.toFixed(2),
     costPerUnit: costPerUnit.toFixed(4),
     minimumStock: minimumStock.toFixed(2),
+    minimumPackageCount: minimumPackageCount.toFixed(2),
   });
   refresh();
   redirect("/ingredientes?success=ingrediente");
@@ -146,6 +148,41 @@ export async function deleteStockBatch(id: number) {
   refresh();
   redirect("/estoque?success=excluido");
 }
+export async function editIngredient(formData: FormData) {
+  const id = Number(formData.get("id"));
+  const name = String(formData.get("name") || "").trim();
+  const unit = String(formData.get("unit") || "g");
+  const packageLabel = String(formData.get("packageLabel") || "unidade").trim();
+  const purchaseQuantity = Number(String(formData.get("purchaseQuantity") || "0").replace(",", "."));
+  const purchasePrice = Number(String(formData.get("purchasePrice") || "0").replace(",", "."));
+  const minimumStock = Number(String(formData.get("minimumStock") || "0").replace(",", "."));
+  const minimumPackageCount = Number(String(formData.get("minimumPackageCount") || "0").replace(",", "."));
+
+  if (!id || !name) return;
+
+  const costPerUnit = purchasePrice > 0 ? purchasePrice / purchaseQuantity : 0;
+
+  await db.update(ingredients)
+    .set({
+      name,
+      unit,
+      packageLabel,
+      purchasePrice: purchasePrice.toFixed(2),
+      purchaseQuantity: purchaseQuantity.toFixed(2),
+      costPerUnit: costPerUnit.toFixed(4),
+      minimumStock: minimumStock.toFixed(2),
+      minimumPackageCount: minimumPackageCount.toFixed(2),
+    })
+    .where(eq(ingredients.id, id));
+
+  // revalidate dependent pages
+  revalidatePath("/ingredientes");
+  revalidatePath("/estoque");
+  revalidatePath("/");
+
+  redirect("/ingredientes?success=editado");
+}
+
 
 export async function deleteIngredient(id: number) {
   await db.delete(stockBatches).where(eq(stockBatches.ingredientId, id));
