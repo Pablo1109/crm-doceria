@@ -1,23 +1,25 @@
 "use client";
 import { useState, useMemo } from "react";
 import { money } from "@/lib/format";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Plus, 
-  Trash2, 
-  Lock, 
-  Unlock, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Plus,
+  Trash2,
+  Lock,
+  Unlock,
   HelpCircle,
   PiggyBank,
   Wallet,
   X,
   CheckCircle2,
-  CalendarCheck
+  CalendarCheck,
+  Edit
 } from "lucide-react";
 import { addTransaction, deleteTransaction } from "./actions";
 import { settleOrder } from "@/app/pedidos/actions";
 import SubmitButton from "@/components/SubmitButton";
+import Link from "next/link";
 
 type Transaction = {
   id: number;
@@ -488,16 +490,22 @@ export default function FinanceiroClient({ transactions, orderCosts, pendingOrde
                     {t.category === "pedido" || t.category === "ingrediente" ? (
                       <span className="text-[10px] text-slate-400 font-bold" title="Lançamentos automáticos devem ser excluídos nas abas de Pedidos ou Estoque.">Automático</span>
                     ) : (
-                      <form action={async () => {
-                        if (confirm("Excluir este lançamento manual do cofre?")) {
-                          await deleteTransaction(t.id);
-                        }
-                      }}>
-                        <button type="submit" className="text-red-400 hover:text-red-600 transition p-1 hover:bg-red-50 rounded-lg cursor-pointer">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </form>
-                    )}
+                      <>
+                        <Link href={`/financeiro/edit/${t.id}`} className="inline-flex items-center gap-1 text-sm text-[#5b382d] hover:underline">
+                          <Edit className="h-4 w-4" /> Editar
+                        </Link>
+                        <form action={async () => {
+                          if (confirm("Excluir este lançamento manual do cofre?")) {
+                            await deleteTransaction(t.id);
+                          }
+                        }}>
+                          <button type="submit" className="text-red-400 hover:text-red:600 transition p-1 hover:bg-red-50 rounded-lg cursor-pointer">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </form>
+                      </>
+                    
+                    ) }
                   </td>
                 </tr>
               ))}
