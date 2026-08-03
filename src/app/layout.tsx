@@ -35,6 +35,16 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     redirect("/login");
   }
 
+  if (!user) {
+    return (
+      <html lang="pt-br">
+        <body className="bg-[#fff8ef] text-slate-900 antialiased">
+          {children}
+        </body>
+      </html>
+    );
+  }
+
   return (
     <html lang="pt-br">
       <body className="bg-[#fff8ef] text-slate-900 antialiased">
