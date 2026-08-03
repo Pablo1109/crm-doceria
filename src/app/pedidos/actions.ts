@@ -78,22 +78,50 @@ export async function updateOrderStatus(id: number, status: string) {
 
   if (!stockAlreadyDeducted && shouldDeductStockNow) {
     await deductStockForOrder(id);
-
-    // Registra entrada financeira no Cofre
-    const amountVal = current.totalAmount || "0";
-    await db.insert(financialTransactions).values({
-      type: "income",
-      amount: amountVal,
-      description: `Pedido #${String(current.id).padStart(4, "0")} - ${current.customerName}`,
-      date: new Date().toISOString().split("T")[0],
-      category: "pedido",
-      referenceId: current.id,
-    });
   }
 
   revalidatePath("/pedidos");
   revalidatePath(`/pedidos/${id}`);
   revalidatePath("/estoque");
+  revalidatePath("/financeiro");
+  revalidatePath("/");
+}
+
+export async function settleOrder(orderId: number) {
+  const [order] = await db.select().from(orders).where(eq(orders.id, orderId));
+  if (!order || order.settled) return;
+
+  // 1. Marcar pedido como acertado
+  await db.update(orders).set({ settled: true }).where(eq(orders.id, orderId));
+
+  // 2. Inserir transação de entrada no cofre
+  await db.insert(financialTransactions).values({
+    type: "income",
+    amount: order.totalAmount || "0",
+    description: `Pedido #${String(order.id).padStart(4, "0")} - ${order.customerName} (Acertado)`,
+    date: new Date().toISOString().split("T")[0],
+    category: "pedido",
+    referenceId: order.id,
+  });
+
+  revalidatePath("/pedidos");
+  revalidatePath(`/pedidos/${orderId}`);
+  revalidatePath("/financeiro");
+  revalidatePath("/");
+}
+
+export async function unsettleOrder(orderId: number) {
+  const [order] = await db.select().from(orders).where(eq(orders.id, orderId));
+  if (!order || !order.settled) return;
+
+  // 1. Desmarcar como acertado
+  await db.update(orders).set({ settled: false }).where(eq(orders.id, orderId));
+
+  // 2. Apagar transação do cofre
+  await db.delete(financialTransactions).where(eq(financialTransactions.referenceId, orderId));
+
+  revalidatePath("/pedidos");
+  revalidatePath(`/pedidos/${orderId}`);
   revalidatePath("/financeiro");
   revalidatePath("/");
 }

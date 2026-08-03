@@ -23,7 +23,7 @@ export default async function CalendarioPage() {
       notes: orders.notes,
     })
     .from(orders)
-    .where(desc(orders.deliveryDate)); // ordenado para consistência
+    .orderBy(desc(orders.deliveryDate)); // ordenado para consistência
 
   // 2. Buscar itens e nomes das receitas para somar as quantidades de docinhos de cada dia
   const items = await db

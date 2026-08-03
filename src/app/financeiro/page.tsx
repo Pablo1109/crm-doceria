@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { financialTransactions, orders, orderItems, recipes, recipeIngredients, ingredients } from "@/db/schema";
-import { desc, eq, inArray } from "drizzle-orm";
+import { desc, eq, inArray, and } from "drizzle-orm";
 import FinanceiroClient from "./FinanceiroClient";
 import Toast from "@/components/Toast";
 
@@ -34,7 +34,23 @@ export default async function FinanceiroPage({ searchParams }: { searchParams?: 
     .where(inArray(orders.status, ["finished", "delivered"]))
     .catch(() => []); // Prevenir erros caso as tabelas estejam vazias
 
-  // 3. Agrupar custos de ingredientes por pedido
+  // 3. Buscar todos os pedidos entregues/concluídos que ainda não foram acertados (Previsão de Entradas)
+  const pendingOrders = await db
+    .select({
+      id: orders.id,
+      customerName: orders.customerName,
+      deliveryDate: orders.deliveryDate,
+      totalAmount: orders.totalAmount,
+    })
+    .from(orders)
+    .where(and(
+      inArray(orders.status, ["finished", "delivered"]),
+      eq(orders.settled, false)
+    ))
+    .orderBy(desc(orders.deliveryDate))
+    .catch(() => []);
+
+  // 4. Agrupar custos de ingredientes por pedido
   const orderCostMap = new Map<number, { orderId: number; date: string; revenue: number; cost: number }>();
   
   if (Array.isArray(completedOrderItems)) {
@@ -64,9 +80,9 @@ export default async function FinanceiroPage({ searchParams }: { searchParams?: 
     <div className="space-y-7">
       <Toast type={params?.success} />
       <div>
-        <p className="text-sm font-black uppercase tracking-widest text-rose-400">Organização financeira</p>
-        <h1 className="text-3xl font-black text-slate-950">Gestão do Caixa e Cofre</h1>
-        <p className="text-slate-500 text-sm mt-1">
+        <p className="text-sm font-black uppercase tracking-widest text-[#c98b9b]">Organização financeira</p>
+        <h1 className="text-3xl font-black text-[#5b382d]">Gestão do Caixa e Cofre</h1>
+        <p className="text-[#8b6a5d] text-sm mt-1">
           Acompanhe o saldo real em dinheiro no cofre físico da doceria e analise o lucro real por quinzena com base no custo de produção dos doces.
         </p>
       </div>
@@ -74,6 +90,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams?: 
       <FinanceiroClient 
         transactions={transactions} 
         orderCosts={orderCosts} 
+        pendingOrders={pendingOrders}
       />
     </div>
   );

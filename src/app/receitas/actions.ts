@@ -16,6 +16,7 @@ export async function createRecipe(formData: FormData) {
   const yieldValue = Number(formData.get("yield") || "35");
   const laborCost = formData.get("laborCost") as string;
   const markup = formData.get("markup") as string;
+  const ingredientsJson = formData.get("ingredientsJson") as string;
 
   const [newRecipe] = await db.insert(recipes).values({
     name,
@@ -24,6 +25,36 @@ export async function createRecipe(formData: FormData) {
     laborCost,
     markup,
   }).returning();
+
+  if (ingredientsJson) {
+    try {
+      const list = JSON.parse(ingredientsJson) as {
+        ingredientId: number;
+        usageMode: string;
+        quantity: number;
+        packageCount: number;
+      }[];
+
+      for (const item of list) {
+        let quantity = Number(item.quantity || 0);
+
+        if (item.usageMode === "package") {
+          const [ingredient] = await db.select().from(ingredients).where(eq(ingredients.id, item.ingredientId));
+          quantity = Number(item.packageCount || 0) * Number(ingredient?.purchaseQuantity || 0);
+        }
+
+        if (quantity > 0 && item.ingredientId) {
+          await db.insert(recipeIngredients).values({
+            recipeId: newRecipe.id,
+            ingredientId: item.ingredientId,
+            quantity: quantity.toString(),
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao associar ingredientes no cadastro da receita:", err);
+    }
+  }
 
   revalidatePath("/receitas");
   return newRecipe.id;

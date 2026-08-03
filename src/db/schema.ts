@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, numeric, integer, date } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, numeric, integer, date, boolean } from "drizzle-orm/pg-core";
 
 export const ingredients = pgTable("ingredients", {
   id: serial("id").primaryKey(),
@@ -54,6 +54,7 @@ export const orders = pgTable("orders", {
   partyDate: date("party_date"),
   partyTime: text("party_time"),
   status: text("status").default("pending").notNull(),
+  settled: boolean("settled").default(false).notNull(),
   totalAmount: numeric("total_amount", { precision: 10, scale: 2 }),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
