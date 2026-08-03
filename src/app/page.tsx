@@ -5,6 +5,8 @@ import { and, asc, eq, gte, sql } from "drizzle-orm";
 import Link from "next/link";
 import { CalendarClock, Package, Plus, Sparkles, TrendingUp, WalletCards } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const today = new Date().toISOString().split("T")[0];
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);

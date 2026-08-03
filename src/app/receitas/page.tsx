@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Plus, ChevronRight, Calculator } from "lucide-react";
 import { deleteRecipe } from "./actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function ReceitasPage() {
   const allRecipes = await db.select().from(recipes).orderBy(recipes.name);
 

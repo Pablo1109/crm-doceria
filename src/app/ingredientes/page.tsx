@@ -7,6 +7,8 @@ import { money, numberValue } from "@/lib/format";
 import SubmitButton from "@/components/SubmitButton";
 import Toast from "@/components/Toast";
 
+export const dynamic = "force-dynamic";
+
 export default async function IngredientesPage({ searchParams }: { searchParams?: Promise<{ success?: string }> }) {
   const params = await searchParams;
   const allIngredients = await db.select().from(ingredients).orderBy(asc(ingredients.name));

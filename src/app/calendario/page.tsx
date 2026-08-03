@@ -3,6 +3,8 @@ import { orders, orderItems, recipes, calendarEvents } from "@/db/schema";
 import { asc, desc } from "drizzle-orm";
 import CalendarioClient from "./CalendarioClient";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Calendário de Encomendas & Parcerias | La Délice",
 };

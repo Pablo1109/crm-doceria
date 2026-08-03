@@ -8,6 +8,8 @@ import { ptBR } from "date-fns/locale";
 import { updateOrderStatus, deleteOrder } from "./actions";
 import StatusSelect from "./StatusSelect";
 
+export const dynamic = "force-dynamic";
+
 export default async function PedidosPage() {
   const allOrders = await db.select().from(orders).orderBy(desc(orders.deliveryDate));
 

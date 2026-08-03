@@ -6,6 +6,8 @@ import Toast from "@/components/Toast";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function EstoquePage({ searchParams }: { searchParams?: Promise<{ success?: string }> }) {
   const params = await searchParams;
   const allIngredients = await db.select().from(ingredients).orderBy(asc(ingredients.name));
