@@ -44,8 +44,43 @@ export default function OrderForm({ recipes }: { recipes: Recipe[] }) {
     <div><p className="text-sm font-black uppercase tracking-widest text-rose-400">Nova encomenda</p><h1 className="text-3xl font-black text-slate-950">Cadastrar pedido</h1><p className="text-slate-500">Clique em Adicionar produto, escolha a receita/produto e informe quantidade e valor.</p></div>
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-4 rounded-[2rem] bg-white p-6 shadow-sm"><h2 className="text-xl font-black">Cliente</h2><input name="customerName" required placeholder="Nome do cliente" className="w-full rounded-2xl border border-slate-200 px-4 py-3" /><input name="customerPhone" placeholder="WhatsApp / telefone" className="w-full rounded-2xl border border-slate-200 px-4 py-3" /><div className="grid grid-cols-2 gap-3"><input name="deliveryDate" required type="date" className="rounded-2xl border border-slate-200 px-4 py-3" /><input name="deliveryTime" type="time" className="rounded-2xl border border-slate-200 px-4 py-3" /></div><select name="deliveryType" className="w-full rounded-2xl border border-slate-200 px-4 py-3"><option value="retirada">Retirada</option><option value="entrega">Entrega</option></select><input name="signal" type="number" step="0.01" placeholder="Sinal pago" className="w-full rounded-2xl border border-slate-200 px-4 py-3" /></div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-sm"><h2 className="mb-4 text-xl font-black">Observações</h2><textarea name="notes" rows={12} placeholder="Tema, cores, recheio, endereço, detalhes combinados..." className="w-full rounded-2xl border border-slate-200 px-4 py-3" /></div>
+        <div className="space-y-4 rounded-[2rem] bg-white p-6 shadow-sm">
+          <h2 className="text-xl font-black">Cliente</h2>
+          <input name="customerName" required placeholder="Nome do cliente" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
+          <input name="customerPhone" placeholder="WhatsApp / telefone" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400">Data de Entrega</label>
+              <input name="deliveryDate" required type="date" className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400">Horário de Entrega</label>
+              <input name="deliveryTime" type="time" className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400">Data da Festa</label>
+              <input name="partyDate" type="date" className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400">Horário da Festa</label>
+              <input name="partyTime" type="time" className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
+            </div>
+          </div>
+
+          <select name="deliveryType" className="w-full rounded-2xl border border-slate-200 px-4 py-3">
+            <option value="retirada">Retirada</option>
+            <option value="entrega">Entrega</option>
+          </select>
+          <input name="signal" type="number" step="0.01" placeholder="Sinal pago" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
+        </div>
+        <div className="rounded-[2rem] bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-xl font-black">Observações</h2>
+          <textarea name="notes" rows={12} placeholder="Tema, cores, recheio, endereço, detalhes combinados..." className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
+        </div>
       </div>
       <div className="rounded-[2rem] bg-white p-6 shadow-sm">
         <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"><div><h2 className="text-xl font-black">Produtos do pedido</h2><p className="text-sm text-slate-500">Produto vem das receitas cadastradas. Cadastre uma receita se a lista estiver vazia.</p></div><button type="button" onClick={addItem} className="inline-flex items-center justify-center rounded-2xl bg-rose-50 px-4 py-2 text-sm font-black text-rose-600 hover:bg-rose-100"><Plus className="mr-2 h-4 w-4" />Adicionar produto</button></div>

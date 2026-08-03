@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { CalendarDays, ChefHat, ClipboardList, Home, Package, WalletCards } from "lucide-react";
+import { Calendar, ChefHat, ClipboardList, Home, Package, WalletCards, Boxes, LogOut } from "lucide-react";
 import MobileNav from "@/components/MobileNav";
+import { getCurrentUser } from "@/lib/auth";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,13 +15,26 @@ export const metadata: Metadata = {
 const menuItems = [
   { name: "Dashboard", href: "/", icon: Home, iconName: "Home" },
   { name: "Pedidos", href: "/pedidos", icon: ClipboardList, iconName: "ClipboardList" },
+  { name: "Calendário", href: "/calendario", icon: Calendar, iconName: "Calendar" },
   { name: "Receitas", href: "/receitas", icon: ChefHat, iconName: "ChefHat" },
   { name: "Ingredientes", href: "/ingredientes", icon: Package, iconName: "Package" },
-  { name: "Estoque", href: "/estoque", icon: CalendarDays, iconName: "CalendarDays" },
+  { name: "Estoque", href: "/estoque", icon: Boxes, iconName: "Boxes" },
   { name: "Financeiro", href: "/financeiro", icon: WalletCards, iconName: "WalletCards" },
 ];
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const user = await getCurrentUser();
+  const userName = user ? user.name : "Painel da Ana";
+
+  async function handleLogout() {
+    "use server";
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    cookieStore.delete("auth_token");
+    const { redirect } = await import("next/navigation");
+    redirect("/login");
+  }
+
   return (
     <html lang="pt-br">
       <body className="bg-[#fff8ef] text-slate-900 antialiased">
@@ -48,8 +62,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             </nav>
 
             <div className="m-4 rounded-3xl border border-[#ead8cf] bg-[#fff8ef] p-4">
-              <p className="text-sm font-black text-[#5b382d]">Painel da Ana</p>
-              <p className="mt-2 text-xs leading-5 text-[#8b6a5d]">Encomendas, receitas e estoque com baixa automática quando o pedido é concluído.</p>
+              <p className="text-sm font-black text-[#5b382d]">Olá, {userName}!</p>
+              <p className="mt-1 text-[10px] uppercase font-bold tracking-widest text-[#9a6d5c]">La Délice Doceria</p>
+              <p className="mt-2 text-xs leading-5 text-[#8b6a5d]">Encomendas, receitas e estoque com baixa automática ao concluir o pedido.</p>
+              {user && (
+                <form action={handleLogout} className="mt-3">
+                  <button type="submit" className="w-full text-left text-xs font-bold text-red-500 hover:text-red-700 transition flex items-center gap-1.5 cursor-pointer">
+                    <LogOut className="h-3.5 w-3.5" />
+                    Sair da conta
+                  </button>
+                </form>
+              )}
             </div>
           </aside>
 

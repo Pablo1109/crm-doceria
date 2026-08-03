@@ -47,7 +47,7 @@ export default async function ReceitasPage() {
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-xl font-bold text-gray-900">{recipe.name}</h3>
                 <span className="bg-pink-100 text-pink-700 text-xs font-bold px-2 py-1 rounded">
-                  {recipe.markup}% Markup
+                  Rende {recipe.yield} un • {recipe.markup}% Markup
                 </span>
               </div>
               
@@ -57,11 +57,15 @@ export default async function ReceitasPage() {
 
               <div className="space-y-2 border-t pt-4 mb-6">
                 <div className="flex justify-between text-sm text-gray-600">
-                  <span>Custo Produção:</span>
+                  <span>Custo total:</span>
                   <span className="font-medium">R$ {totalCost.toFixed(2)}</span>
                 </div>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Sugerido un.:</span>
+                  <span className="font-medium text-emerald-600">R$ {(suggestedPrice / (recipe.yield || 1)).toFixed(2)}</span>
+                </div>
                 <div className="flex justify-between text-lg font-bold text-pink-600">
-                  <span>Sugerido:</span>
+                  <span>Sugerido total:</span>
                   <span>R$ {suggestedPrice.toFixed(2)}</span>
                 </div>
               </div>

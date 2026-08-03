@@ -1,6 +1,80 @@
 import { db } from "@/db";
-import { ingredients, orders } from "@/db/schema";
-import { money, numberValue, shortDate } from "@/lib/format";
-import { desc, gte, sql } from "drizzle-orm";
-import { Banknote, CircleDollarSign, TrendingUp, WalletCards } from "lucide-react";
-export default async function FinanceiroPage(){ const monthStart=new Date(new Date().getFullYear(),new Date().getMonth(),1); const all=await db.select().from(orders).where(gte(orders.createdAt,monthStart)).orderBy(desc(orders.createdAt)); const revenue=all.reduce((s,o)=>s+numberValue(o.totalAmount),0); const cost=revenue*0.55; const profit=revenue-cost; const avg=all.length?revenue/all.length:0; const stock=await db.select({value:sql<string>`coalesce(sum(${ingredients.purchaseQuantity} * ${ingredients.costPerUnit}), 0)`}).from(ingredients); const cards=[{label:"Faturamento do mês",value:money(revenue),icon:TrendingUp,color:"text-rose-600 bg-rose-50"},{label:"Custo estimado",value:money(cost),icon:WalletCards,color:"text-amber-600 bg-amber-50"},{label:"Lucro estimado",value:money(profit),icon:CircleDollarSign,color:"text-emerald-600 bg-emerald-50"},{label:"Ticket médio",value:money(avg),icon:Banknote,color:"text-violet-600 bg-violet-50"}]; return <div className="space-y-7"><div><p className="text-sm font-black uppercase tracking-widest text-rose-400">Organização financeira</p><h1 className="text-3xl font-black text-slate-950">Financeiro</h1><p className="text-slate-500">Resumo automático com base nos pedidos. O lucro detalhado melhora conforme as receitas forem cadastradas com custos corretos.</p></div><div className="grid gap-4 md:grid-cols-4">{cards.map(c=><div key={c.label} className="rounded-[2rem] bg-white p-5 shadow-sm"><div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-2xl ${c.color}`}><c.icon className="h-5 w-5"/></div><p className="text-xs font-black uppercase tracking-widest text-slate-400">{c.label}</p><p className="mt-2 text-2xl font-black text-slate-950">{c.value}</p></div>)}</div><div className="rounded-[2rem] bg-white p-6 shadow-sm"><p className="text-xs font-black uppercase tracking-widest text-slate-400">Valor estimado parado em estoque</p><p className="mt-2 text-3xl font-black text-slate-950">{money(stock[0]?.value)}</p></div><div className="overflow-hidden rounded-[2rem] bg-white shadow-sm"><div className="border-b border-slate-100 p-5"><h2 className="text-xl font-black">Pedidos do mês</h2></div><div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left"><thead className="bg-slate-50 text-xs font-black uppercase tracking-widest text-slate-400"><tr><th className="px-5 py-4">Cliente</th><th>Data</th><th>Status</th><th>Total</th></tr></thead><tbody className="divide-y divide-slate-100">{all.map(o=><tr key={o.id}><td className="px-5 py-4 font-black">{o.customerName}</td><td>{shortDate(o.deliveryDate)}</td><td className="capitalize">{o.status}</td><td className="font-black text-rose-600">{money(o.totalAmount)}</td></tr>)}</tbody></table></div></div></div>; }
+import { financialTransactions, orders, orderItems, recipes, recipeIngredients, ingredients } from "@/db/schema";
+import { desc, eq, inArray } from "drizzle-orm";
+import FinanceiroClient from "./FinanceiroClient";
+import Toast from "@/components/Toast";
+
+export default async function FinanceiroPage({ searchParams }: { searchParams?: Promise<{ success?: string }> }) {
+  const params = await searchParams;
+  
+  // 1. Buscar todas as transações do livro-caixa ordenadas por data descrescente
+  const transactions = await db
+    .select()
+    .from(financialTransactions)
+    .orderBy(desc(financialTransactions.date), desc(financialTransactions.createdAt));
+
+  // 2. Buscar itens de pedidos concluídos/entregues para calcular custo exato de produção (Lucro Real)
+  const completedOrderItems = await db
+    .select({
+      orderId: orders.id,
+      deliveryDate: orders.deliveryDate,
+      totalAmount: orders.totalAmount,
+      quantity: orderItems.quantity,
+      recipeId: recipes.id,
+      recipeYield: recipes.yield,
+      ingredientId: recipeIngredients.ingredientId,
+      ingredientQty: recipeIngredients.quantity,
+      ingredientCostPerUnit: ingredients.costPerUnit,
+    })
+    .from(orders)
+    .innerJoin(orderItems, eq(orders.id, orderItems.orderId))
+    .innerJoin(recipes, eq(orderItems.recipeId, recipes.id))
+    .innerJoin(recipeIngredients, eq(recipes.id, recipeIngredients.recipeId))
+    .innerJoin(ingredients, eq(recipeIngredients.ingredientId, ingredients.id))
+    .where(inArray(orders.status, ["finished", "delivered"]))
+    .catch(() => []); // Prevenir erros caso as tabelas estejam vazias
+
+  // 3. Agrupar custos de ingredientes por pedido
+  const orderCostMap = new Map<number, { orderId: number; date: string; revenue: number; cost: number }>();
+  
+  if (Array.isArray(completedOrderItems)) {
+    completedOrderItems.forEach((row) => {
+      const orderId = row.orderId;
+      const recipeYield = Number(row.recipeYield || 1) || 1;
+      const orderQty = Number(row.quantity);
+      const ingredientQty = Number(row.ingredientQty);
+      const costPerUnit = Number(row.ingredientCostPerUnit);
+      
+      const ingredientCostForThisItem = costPerUnit * ingredientQty * (orderQty / recipeYield);
+      
+      const existing = orderCostMap.get(orderId) || {
+        orderId: orderId,
+        date: row.deliveryDate,
+        revenue: Number(row.totalAmount || 0),
+        cost: 0,
+      };
+      existing.cost += ingredientCostForThisItem;
+      orderCostMap.set(orderId, existing);
+    });
+  }
+
+  const orderCosts = Array.from(orderCostMap.values());
+
+  return (
+    <div className="space-y-7">
+      <Toast type={params?.success} />
+      <div>
+        <p className="text-sm font-black uppercase tracking-widest text-rose-400">Organização financeira</p>
+        <h1 className="text-3xl font-black text-slate-950">Gestão do Caixa e Cofre</h1>
+        <p className="text-slate-500 text-sm mt-1">
+          Acompanhe o saldo real em dinheiro no cofre físico da doceria e analise o lucro real por quinzena com base no custo de produção dos doces.
+        </p>
+      </div>
+
+      <FinanceiroClient 
+        transactions={transactions} 
+        orderCosts={orderCosts} 
+      />
+    </div>
+  );
+}

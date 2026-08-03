@@ -149,13 +149,20 @@ export default async function ReceitaDetailPage({ params, searchParams }: { para
           <div className="card-soft rounded-[2rem] border-2 border-[#f1d8cf] p-6">
             <h2 className="mb-6 border-b border-[#ead8cf] pb-2 text-lg font-black text-[#5b382d]">Resumo financeiro</h2>
             <div className="space-y-4">
+              <div className="flex justify-between text-sm"><span className="text-[#8b6a5d]">Rendimento da Receita:</span><span className="font-bold">{recipe.yield} unidades</span></div>
               <div className="flex justify-between text-sm"><span className="text-[#8b6a5d]">Custo Ingredientes:</span><span className="font-bold">R$ {ingredientsCost.toFixed(2)}</span></div>
               <div className="flex justify-between text-sm"><span className="text-[#8b6a5d]">Mão de Obra:</span><span className="font-bold">R$ {laborCost.toFixed(2)}</span></div>
               <div className="flex justify-between border-t border-[#ead8cf] pt-2 text-base font-black"><span className="text-[#5b382d]">Custo Total:</span><span>R$ {totalCost.toFixed(2)}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-[#8b6a5d]">Custo por Unidade:</span><span className="font-bold text-rose-500">R$ {(totalCost / (recipe.yield || 1)).toFixed(2)}</span></div>
+              
               <div className="flex justify-between text-sm text-emerald-600"><span>Lucro Desejado ({markup}%):</span><span>+ R$ {profit.toFixed(2)}</span></div>
-              <div className="mt-8 rounded-3xl bg-[#5b382d] p-5 text-center text-white shadow-inner">
-                <p className="mb-1 text-xs font-black uppercase opacity-80">Preço sugerido</p>
-                <p className="text-3xl font-black">R$ {suggestedPrice.toFixed(2)}</p>
+              
+              <div className="mt-6 border-t border-[#ead8cf] pt-4">
+                <div className="rounded-3xl bg-[#5b382d] p-5 text-center text-white shadow-inner">
+                  <p className="mb-1 text-xs font-black uppercase opacity-80">Preço sugerido total</p>
+                  <p className="text-2xl font-black">R$ {suggestedPrice.toFixed(2)}</p>
+                  <p className="mt-1 text-xs opacity-75">Sugerido por Unidade: R$ {(suggestedPrice / (recipe.yield || 1)).toFixed(2)}</p>
+                </div>
               </div>
             </div>
           </div>

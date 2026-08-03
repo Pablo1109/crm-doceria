@@ -41,6 +41,19 @@ export default function NovaReceitaPage() {
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Rendimento da Receita (Unidades de Doces)</label>
+            <input
+              name="yield"
+              type="number"
+              required
+              defaultValue="35"
+              className="w-full border p-2 rounded-md focus:ring-pink-500 focus:border-pink-500"
+              placeholder="Ex: 35 (docinhos)"
+            />
+            <p className="text-[10px] text-gray-400 mt-1">Quantas unidades de doce essa receita inteira produz?</p>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Custo de Mão de Obra (R$)</label>

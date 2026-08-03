@@ -13,12 +13,14 @@ function n(v: FormDataEntryValue | null) {
 export async function createRecipe(formData: FormData) {
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
+  const yieldValue = Number(formData.get("yield") || "35");
   const laborCost = formData.get("laborCost") as string;
   const markup = formData.get("markup") as string;
 
   const [newRecipe] = await db.insert(recipes).values({
     name,
     description,
+    yield: yieldValue,
     laborCost,
     markup,
   }).returning();

@@ -32,6 +32,7 @@ export const recipes = pgTable("recipes", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
+  yield: integer("yield").default(35).notNull(), // Rendimento padrão de docinhos (ex: 35)
   laborCost: numeric("labor_cost", { precision: 10, scale: 2 }).default("0"),
   markup: numeric("markup", { precision: 10, scale: 2 }).default("100"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -49,6 +50,9 @@ export const orders = pgTable("orders", {
   customerName: text("customer_name").notNull(),
   customerPhone: text("customer_phone"),
   deliveryDate: date("delivery_date").notNull(),
+  deliveryTime: text("delivery_time"),
+  partyDate: date("party_date"),
+  partyTime: text("party_time"),
   status: text("status").default("pending").notNull(),
   totalAmount: numeric("total_amount", { precision: 10, scale: 2 }),
   notes: text("notes"),
@@ -62,3 +66,37 @@ export const orderItems = pgTable("order_items", {
   quantity: integer("quantity").notNull(),
   unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).notNull(),
 });
+
+// Tabela de usuários para acesso compartilhado
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").unique().notNull(),
+  password: text("password").notNull(), // Armazena a senha com hash SHA-256 simples
+  role: text("role").default("user").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Tabela de compromissos e eventos de parceria do calendário
+export const calendarEvents = pgTable("calendar_events", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  eventDate: date("event_date").notNull(),
+  eventTime: text("event_time"),
+  type: text("type").default("task").notNull(), // 'task', 'partnership', 'meeting', 'other'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Tabela de transações financeiras para o Cofre
+export const financialTransactions = pgTable("financial_transactions", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(), // 'income' (recebimento), 'expense' (gasto de estoque/custo fixo), 'withdrawal' (retirada de lucro)
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  description: text("description").notNull(),
+  date: date("date").notNull(),
+  category: text("category").default("geral").notNull(), // 'pedido', 'ingrediente', 'pro-labore', 'despesa-fixa', 'outro'
+  referenceId: integer("reference_id"), // link opcional para o ID do pedido ou lote de estoque
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+

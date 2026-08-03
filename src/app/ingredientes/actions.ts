@@ -1,6 +1,6 @@
 "use server";
 import { db } from "@/db";
-import { ingredients, stockBatches } from "@/db/schema";
+import { ingredients, stockBatches, financialTransactions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -46,11 +46,14 @@ export async function addStock(formData: FormData) {
   const expiresAt = String(formData.get("expiresAt") || "").trim();
   const notes = String(formData.get("notes") || "").trim();
   if (!ingredientId || packageCount <= 0 || quantityPerPackage <= 0) return;
+  
   const [ingredient] = await db.select().from(ingredients).where(eq(ingredients.id, ingredientId));
   if (!ingredient) return;
+  
   const totalQuantity = packageCount * quantityPerPackage;
   const costPerUnit = totalPrice > 0 ? totalPrice / totalQuantity : Number(ingredient.costPerUnit || 0);
-  await db.insert(stockBatches).values({
+  
+  const [newBatch] = await db.insert(stockBatches).values({
     ingredientId,
     packageLabel: packageLabel || ingredient.packageLabel || "unidade",
     packageCount: packageCount.toFixed(2),
@@ -62,8 +65,20 @@ export async function addStock(formData: FormData) {
     supplier: supplier || null,
     expiresAt: expiresAt || null,
     notes: notes || null,
-  });
-  if (totalPrice > 0) {
+  }).returning();
+
+  if (totalPrice > 0 && newBatch) {
+    // Registrar a despesa de compra de estoque no cofre
+    await db.insert(financialTransactions).values({
+      type: "expense",
+      amount: totalPrice.toFixed(2),
+      description: `Compra estoque: ${packageCount} ${newBatch.packageLabel}(s) de ${ingredient.name}`,
+      date: new Date().toISOString().split("T")[0],
+      category: "ingrediente",
+      referenceId: newBatch.id, // link para o lote de estoque
+    });
+
+    // Atualiza preço médio de compra no ingrediente
     await db.update(ingredients).set({
       purchasePrice: (totalPrice / packageCount).toFixed(2),
       purchaseQuantity: quantityPerPackage.toFixed(2),
@@ -71,6 +86,7 @@ export async function addStock(formData: FormData) {
       updatedAt: new Date(),
     }).where(eq(ingredients.id, ingredientId));
   }
+  
   refresh();
   redirect("/estoque?success=estoque");
 }
@@ -124,6 +140,8 @@ export async function consumeStock(ingredientId: number, quantity: number) {
 }
 
 export async function deleteStockBatch(id: number) {
+  // Excluir movimentações financeiras atreladas a este lote
+  await db.delete(financialTransactions).where(eq(financialTransactions.referenceId, id));
   await db.delete(stockBatches).where(eq(stockBatches.id, id));
   refresh();
   redirect("/estoque?success=excluido");
