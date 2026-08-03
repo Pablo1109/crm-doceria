@@ -101,3 +101,28 @@ export const financialTransactions = pgTable("financial_transactions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Histórico de Conversas e Mensagens da IA
+export const aiConversations = pgTable("ai_conversations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  model: text("model").notNull(),
+  provider: text("provider").notNull(),
+  totalTokens: integer("total_tokens").default(0).notNull(),
+  totalCost: numeric("total_cost", { precision: 10, scale: 6 }).default("0").notNull(),
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  endedAt: timestamp("ended_at"),
+});
+
+export const aiMessages = pgTable("ai_messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").references(() => aiConversations.id).notNull(),
+  role: text("role").notNull(), // 'user' | 'assistant'
+  content: text("content").notNull(),
+  attachments: text("attachments"), // Caminho opcional ou base64 de imagem/documento
+  intent: text("intent"),
+  parsedJson: text("parsed_json"), // JSON estruturado da resposta da IA
+  executedAction: text("executed_action"),
+  success: boolean("success").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Calendar, ChefHat, ClipboardList, Home, Package, WalletCards, Boxes, LogOut } from "lucide-react";
+import { Calendar, ChefHat, ClipboardList, Home, Package, WalletCards, Boxes, LogOut, Sparkles } from "lucide-react";
 import MobileNav from "@/components/MobileNav";
 import { getCurrentUser } from "@/lib/auth";
 import "./globals.css";
@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 
 const menuItems = [
   { name: "Dashboard", href: "/", icon: Home, iconName: "Home" },
+  { name: "Assistente IA", href: "/assistente", icon: Sparkles, iconName: "Sparkles" },
   { name: "Pedidos", href: "/pedidos", icon: ClipboardList, iconName: "ClipboardList" },
   { name: "Calendário", href: "/calendario", icon: Calendar, iconName: "Calendar" },
   { name: "Receitas", href: "/receitas", icon: ChefHat, iconName: "ChefHat" },
