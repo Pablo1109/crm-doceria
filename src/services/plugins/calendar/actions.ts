@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { actionRegistry } from "../../ai/actionRegistry";
 import { db } from "@/db";
 import { calendarEvents } from "@/db/schema";
 import { revalidatePath } from "next/cache";
@@ -35,4 +34,4 @@ export const scheduleEventAction = {
   }
 };
 
-actionRegistry.register(scheduleEventAction);
+

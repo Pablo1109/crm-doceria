@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { actionRegistry } from "../../ai/actionRegistry";
 import { db } from "@/db";
 import { ingredients, stockBatches, financialTransactions } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
@@ -138,5 +137,4 @@ export const consultInventoryAction = {
   }
 };
 
-actionRegistry.register(createPurchaseAction);
-actionRegistry.register(consultInventoryAction);
+

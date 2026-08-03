@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { actionRegistry } from "../../ai/actionRegistry";
 import { db } from "@/db";
 import { financialTransactions } from "@/db/schema";
 import { revalidatePath } from "next/cache";
@@ -77,5 +76,4 @@ export const consultFinanceAction = {
   }
 };
 
-actionRegistry.register(registerManualTransactionAction);
-actionRegistry.register(consultFinanceAction);
+

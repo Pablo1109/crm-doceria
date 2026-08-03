@@ -53,10 +53,17 @@ class ActionRegistry {
   }
 }
 
+import { scheduleEventAction } from "../plugins/calendar/actions";
+import { registerManualTransactionAction, consultFinanceAction } from "../plugins/finance/actions";
+import { createPurchaseAction, consultInventoryAction } from "../plugins/inventory/actions";
+import { createOrderAction } from "../plugins/orders/actions";
+
 export const actionRegistry = new ActionRegistry();
 
-// Importar os plugins para registrá-los automaticamente na inicialização
-import "../plugins/calendar/actions";
-import "../plugins/finance/actions";
-import "../plugins/inventory/actions";
-import "../plugins/orders/actions";
+// Registrando as ações de forma linear e limpa (evitando dependência circular!)
+actionRegistry.register(scheduleEventAction);
+actionRegistry.register(registerManualTransactionAction);
+actionRegistry.register(consultFinanceAction);
+actionRegistry.register(createPurchaseAction);
+actionRegistry.register(consultInventoryAction);
+actionRegistry.register(createOrderAction);
