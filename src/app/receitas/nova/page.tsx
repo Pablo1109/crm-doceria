@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { db } from "@/db";
 import { ingredients } from "@/db/schema";
 import NovaReceitaClient from "./NovaReceitaClient";
