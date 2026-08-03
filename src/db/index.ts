@@ -8,8 +8,28 @@ if (!rawDatabaseUrl) {
   throw new Error("DATABASE_URL is required");
 }
 
-// Remove as aspas duplas caso tenham sido salvas no .env literalmente
-const databaseUrl = rawDatabaseUrl.replace(/"/g, "").trim();
+function parseConnectionString(url: string) {
+  const cleanUrl = url.replace(/"/g, "").trim();
+  
+  // Regex to extract connection components
+  const regex = /^postgresql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)$/;
+  const match = cleanUrl.match(regex);
+  if (!match) return null;
+  
+  return {
+    user: match[1],
+    password: decodeURIComponent(match[2]),
+    host: match[3],
+    port: parseInt(match[4], 10),
+    database: match[5].split("?")[0]
+  };
+}
+
+const credentials = parseConnectionString(rawDatabaseUrl);
+
+if (!credentials) {
+  throw new Error("Invalid DATABASE_URL format. Expected: postgresql://user:pass@host:port/db");
+}
 
 const globalForDb = globalThis as typeof globalThis & {
   __arenaNextJsPostgresqlPool?: Pool;
@@ -18,8 +38,12 @@ const globalForDb = globalThis as typeof globalThis & {
 export const pool =
   globalForDb.__arenaNextJsPostgresqlPool ??
   new Pool({
-    connectionString: databaseUrl,
-    ssl: databaseUrl.includes("supabase") || databaseUrl.includes("neon")
+    host: credentials.host,
+    port: credentials.port,
+    user: credentials.user,
+    password: credentials.password,
+    database: credentials.database,
+    ssl: credentials.host.includes("supabase") || credentials.host.includes("neon")
       ? { rejectUnauthorized: false }
       : undefined,
   });
