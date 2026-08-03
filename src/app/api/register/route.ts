@@ -51,6 +51,9 @@ export async function POST(req: Request) {
     return response;
   } catch (error: any) {
     console.error("Erro no cadastro:", error);
-    return NextResponse.json({ error: "Erro interno no servidor: " + error.message }, { status: 500 });
+    const detail = error.cause?.message || error.cause || error.detail || "";
+    return NextResponse.json({ 
+      error: `Erro interno no servidor: ${error.message}${detail ? ` (Detalhe: ${detail})` : ""}` 
+    }, { status: 500 });
   }
 }
