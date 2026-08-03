@@ -7,8 +7,8 @@ if (!process.env.DATABASE_URL) {
 function parseConnectionString(url: string) {
   const cleanUrl = url.replace(/"/g, "").trim();
   
-  // Regex to extract connection components
-  const regex = /^postgresql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)$/;
+  // Regex to extract connection components (supports postgres:// and postgresql://)
+  const regex = /^postgres(?:ql)?:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)$/;
   const match = cleanUrl.match(regex);
   if (!match) return null;
   
