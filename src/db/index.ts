@@ -4,11 +4,8 @@ import * as schema from "./schema";
 
 const rawDatabaseUrl = process.env.DATABASE_URL;
 
-if (!rawDatabaseUrl) {
-  throw new Error("DATABASE_URL is required");
-}
-
 function parseConnectionString(url: string) {
+  if (!url) return null;
   const cleanUrl = url.replace(/"/g, "").trim();
   
   // Regex to extract connection components (supports postgres:// and postgresql://)
@@ -25,11 +22,7 @@ function parseConnectionString(url: string) {
   };
 }
 
-const credentials = parseConnectionString(rawDatabaseUrl);
-
-if (!credentials) {
-  throw new Error("Invalid DATABASE_URL format. Expected: postgresql://user:pass@host:port/db");
-}
+const credentials = rawDatabaseUrl ? parseConnectionString(rawDatabaseUrl) : null;
 
 const globalForDb = globalThis as typeof globalThis & {
   __arenaNextJsPostgresqlPool?: Pool;
@@ -37,7 +30,7 @@ const globalForDb = globalThis as typeof globalThis & {
 
 export const pool =
   globalForDb.__arenaNextJsPostgresqlPool ??
-  new Pool({
+  new Pool(credentials ? {
     host: credentials.host,
     port: credentials.port,
     user: credentials.user,
@@ -46,6 +39,8 @@ export const pool =
     ssl: credentials.host.includes("supabase") || credentials.host.includes("neon")
       ? { rejectUnauthorized: false }
       : undefined,
+  } : {
+    connectionString: "postgresql://mock:mock@localhost:5432/mock"
   });
 
 if (process.env.NODE_ENV !== "production") {

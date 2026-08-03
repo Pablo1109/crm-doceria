@@ -1,10 +1,7 @@
 import { defineConfig } from "drizzle-kit";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is required for drizzle-kit");
-}
-
 function parseConnectionString(url: string) {
+  if (!url) return null;
   const cleanUrl = url.replace(/"/g, "").trim();
   
   // Regex to extract connection components (supports postgres:// and postgresql://)
@@ -21,16 +18,12 @@ function parseConnectionString(url: string) {
   };
 }
 
-const credentials = parseConnectionString(process.env.DATABASE_URL);
-
-if (!credentials) {
-  throw new Error("Invalid DATABASE_URL format. Expected: postgresql://user:pass@host:port/db");
-}
+const credentials = process.env.DATABASE_URL ? parseConnectionString(process.env.DATABASE_URL) : null;
 
 export default defineConfig({
   dialect: "postgresql",
   schema: "./src/db/schema.ts",
-  dbCredentials: {
+  dbCredentials: credentials ? {
     host: credentials.host,
     port: credentials.port,
     user: credentials.user,
@@ -39,5 +32,7 @@ export default defineConfig({
     ssl: credentials.host.includes("supabase") || credentials.host.includes("neon")
       ? { rejectUnauthorized: false }
       : undefined,
+  } : {
+    url: "postgresql://mock:mock@localhost:5432/mock"
   },
 });
