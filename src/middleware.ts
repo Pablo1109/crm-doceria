@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
-  const publicPaths = ["/login", "/api/login", "/api/register", "/api/health", "/api/test-db"];
+  const publicPaths = ["/login", "/api/login", "/api/register", "/api/health", "/api/test-db", "/api/diagnostic"];
   const isPublic = publicPaths.some((p) => path === p || path.startsWith(`${p}/`));
   if (isPublic) return NextResponse.next();
 
