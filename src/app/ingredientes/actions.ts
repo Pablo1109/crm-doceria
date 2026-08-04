@@ -20,10 +20,15 @@ export async function addIngredient(formData: FormData) {
   const packageLabel = String(formData.get("packageLabel") || "unidade").trim();
   const purchaseQuantity = n(formData.get("purchaseQuantity"));
   const purchasePrice = n(formData.get("purchasePrice"));
-  const minimumStock = n(formData.get("minimumStock"));
+  let minimumStock = n(formData.get("minimumStock"));
+  let minimumPackageCount = n(formData.get("minimumPackageCount"));
   if (!name || purchaseQuantity <= 0) return;
   const costPerUnit = purchasePrice > 0 ? purchasePrice / purchaseQuantity : 0;
-  const minimumPackageCount = n(formData.get("minimumPackageCount"));
+  if (minimumPackageCount > 0 && minimumStock <= 0) {
+    minimumStock = minimumPackageCount * purchaseQuantity;
+  } else if (minimumStock > 0 && minimumPackageCount <= 0 && purchaseQuantity > 0) {
+    minimumPackageCount = minimumStock / purchaseQuantity;
+  }
   await db.insert(ingredients).values({
     name,
     unit,
@@ -155,12 +160,18 @@ export async function editIngredient(formData: FormData) {
   const packageLabel = String(formData.get("packageLabel") || "unidade").trim();
   const purchaseQuantity = Number(String(formData.get("purchaseQuantity") || "0").replace(",", "."));
   const purchasePrice = Number(String(formData.get("purchasePrice") || "0").replace(",", "."));
-  const minimumStock = Number(String(formData.get("minimumStock") || "0").replace(",", "."));
-  const minimumPackageCount = Number(String(formData.get("minimumPackageCount") || "0").replace(",", "."));
+  let minimumStock = Number(String(formData.get("minimumStock") || "0").replace(",", "."));
+  let minimumPackageCount = Number(String(formData.get("minimumPackageCount") || "0").replace(",", "."));
 
   if (!id || !name) return;
 
-  const costPerUnit = purchasePrice > 0 ? purchasePrice / purchaseQuantity : 0;
+  const costPerUnit = (purchasePrice > 0 && purchaseQuantity > 0) ? purchasePrice / purchaseQuantity : 0;
+
+  if (minimumPackageCount > 0 && (minimumStock <= 0 || isNaN(minimumStock))) {
+    minimumStock = minimumPackageCount * purchaseQuantity;
+  } else if (minimumStock > 0 && (minimumPackageCount <= 0 || isNaN(minimumPackageCount)) && purchaseQuantity > 0) {
+    minimumPackageCount = minimumStock / purchaseQuantity;
+  }
 
   await db.update(ingredients)
     .set({

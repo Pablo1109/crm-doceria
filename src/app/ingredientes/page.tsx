@@ -63,16 +63,18 @@ export default async function IngredientesPage({ searchParams }: { searchParams?
               </label>
             </div>
 
-            <label className="block text-xs font-black uppercase tracking-wider text-[#9a6d5c]">Estoque mínimo para alerta
-              <input name="minimumStock" type="number" step="0.01" className="mt-2 w-full rounded-2xl border border-[#ead8cf] px-4 py-3" placeholder="Ex: 1000" />
-            </label>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="block text-xs font-black uppercase tracking-wider text-[#9a6d5c]">Estoque mínimo (em embalagens)
+                <input name="minimumPackageCount" type="number" step="0.01" className="mt-2 w-full rounded-2xl border border-[#ead8cf] px-4 py-3" placeholder="Ex: 2 (alerta se < 2 emb)" />
+              </label>
 
-            <label className="block text-xs font-black uppercase tracking-wider text-[#9a6d5c]">Estoque mínimo por embalagem
-              <input name="minimumPackageCount" type="number" step="0.01" className="mt-2 w-full rounded-2xl border border-[#ead8cf] px-4 py-3" placeholder="Ex: 10" />
-            </label>
+              <label className="block text-xs font-black uppercase tracking-wider text-[#9a6d5c]">Equivalente em g/ml (opcional)
+                <input name="minimumStock" type="number" step="0.01" className="mt-2 w-full rounded-2xl border border-[#ead8cf] px-4 py-3" placeholder="Calculado automaticamente" />
+              </label>
+            </div>
 
             <div className="rounded-2xl bg-[#fff1f4] p-4 text-sm leading-6 text-[#7b4b3f]">
-              Exemplo certo: <b>Leite condensado</b> → embalagem <b>caixa</b> → medida <b>g</b> → conteúdo <b>395</b>. Se for 1kg, coloque medida <b>g</b> e conteúdo <b>1000</b>.
+              Exemplo certo: <b>Leite condensado</b> → embalagem <b>caixa</b> → medida <b>g</b> → conteúdo <b>395</b>. Alerta configurado para avisar se restarem menos de <b>2</b> caixas.
             </div>
             <SubmitButton pendingText="Cadastrando..." className="w-full rounded-2xl bg-[#5b382d] px-4 py-3 font-black text-white hover:bg-[#c98b9b]">
               Cadastrar ingrediente

@@ -14,6 +14,7 @@ type Ingredient = {
   purchaseQuantity: string;
   costPerUnit: string;
   minimumStock: string | null;
+  minimumPackageCount?: string | null;
 };
 
 type Batch = {
@@ -136,8 +137,10 @@ export default function EstoqueClient({ ingredients, batches, consumptionMap }: 
                 <div className="grid grid-cols-3 gap-4 text-center items-end px-2 md:px-8">
                   {shelfIngredients.map((item) => {
                     const stock = totals.get(item.id) || 0;
-                    const min = numberValue(item.minimumStock);
-                    const isLow = stock <= min;
+                    const minPkg = numberValue(item.minimumPackageCount);
+                    const purchaseQty = numberValue(item.purchaseQuantity) || 1;
+                    const min = minPkg > 0 ? minPkg * purchaseQty : numberValue(item.minimumStock);
+                    const isLow = min > 0 && stock <= min;
                     const consumption = consumptionMap[item.id] || 0;
                     
                     // Cálculo de duração
@@ -290,7 +293,11 @@ export default function EstoqueClient({ ingredients, batches, consumptionMap }: 
                     <div className="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
                       <span className="text-slate-500 font-bold">Estoque mínimo cadastrado:</span>
                       <span className="font-bold text-slate-800">
-                        {numberValue(selectedIngredient.minimumStock).toLocaleString("pt-BR")} {selectedIngredient.unit}
+                        {numberValue(selectedIngredient.minimumPackageCount) > 0 ? (
+                          `${numberValue(selectedIngredient.minimumPackageCount)} ${selectedIngredient.packageLabel || "embalagem(ns)"} (${numberValue(selectedIngredient.minimumStock).toLocaleString("pt-BR")} ${selectedIngredient.unit})`
+                        ) : (
+                          `${numberValue(selectedIngredient.minimumStock).toLocaleString("pt-BR")} ${selectedIngredient.unit}`
+                        )}
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-sm border-b border-slate-100 pb-2">

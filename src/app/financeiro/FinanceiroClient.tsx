@@ -499,13 +499,13 @@ export default function FinanceiroClient({ transactions, orderCosts, pendingOrde
                             await deleteTransaction(t.id);
                           }
                         }}>
-                          <button type="submit" className="text-red-400 hover:text-red:600 transition p-1 hover:bg-red-50 rounded-lg cursor-pointer">
+                          <button type="submit" className="text-red-400 hover:text-red-600 transition p-1 hover:bg-red-50 rounded-lg cursor-pointer">
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </form>
                       </>
                     
-                    ) }
+                                )}
                   </td>
                 </tr>
               ))}

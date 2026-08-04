@@ -17,7 +17,14 @@ export default async function DashboardPage() {
   const totals = new Map<number, number>();
   batches.forEach((b) => totals.set(b.ingredientId, (totals.get(b.ingredientId) || 0) + numberValue(b.totalQuantity)));
   const lowStock = allIngredients
-    .map((i) => ({ ...i, totalStock: totals.get(i.id) || 0 }))
+    .map((i) => {
+      const totalStock = totals.get(i.id) || 0;
+      const minPkg = numberValue(i.minimumPackageCount);
+      const purchaseQty = numberValue(i.purchaseQuantity) || 1;
+      const min = minPkg > 0 ? minPkg * purchaseQty : numberValue(i.minimumStock);
+      return { ...i, totalStock, min, isLow: min > 0 ? totalStock <= min : true };
+    })
+    .filter((i) => i.isLow)
     .sort((a, b) => a.totalStock - b.totalStock)
     .slice(0, 6);
   const revenue = numberValue(stats[0]?.total);

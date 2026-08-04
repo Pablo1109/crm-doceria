@@ -23,12 +23,16 @@ export default async function NovoPedidoPage() {
     }, 0);
 
     const totalCost = ingredientsCost + parseFloat(recipe.laborCost || "0");
-    const suggestedPrice = totalCost * (1 + parseFloat(recipe.markup || "0") / 100);
+    const recipeTotalPrice = totalCost * (1 + parseFloat(recipe.markup || "0") / 100);
+    const recipeYield = recipe.yield || 1;
+    const suggestedUnitPrice = recipeYield > 0 ? recipeTotalPrice / recipeYield : recipeTotalPrice;
 
     return {
       id: recipe.id,
       name: recipe.name,
-      suggestedPrice
+      yield: recipeYield,
+      recipeTotalPrice,
+      suggestedUnitPrice
     };
   }));
 

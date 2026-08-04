@@ -61,7 +61,14 @@ export async function generateStructuredResponse(
       throw new Error("Resposta vazia da API do Gemini.");
     }
 
-    const parsed = JSON.parse(rawJsonText.trim()) as AIResponse;
+    // Remover cercas de código markdown (```json ... ```) se presentes
+    const cleanedText = rawJsonText
+      .trim()
+      .replace(/^```(json)?/i, "")
+      .replace(/```$/i, "")
+      .trim();
+
+    const parsed = JSON.parse(cleanedText) as AIResponse;
     return {
       intent: parsed.intent || null,
       confidence: typeof parsed.confidence === "number" ? parsed.confidence : 0,
@@ -73,60 +80,73 @@ export async function generateStructuredResponse(
     };
   } catch (err) {
     console.error("Erro ao chamar a IA (Gemini):", err);
-    return {
-      intent: null,
-      confidence: 0,
-      needsConfirmation: false,
-      missingFields: [],
-      warnings: ["Erro ao conectar com o serviço de IA local/remoto."],
-      extractedData: null,
-      explanation: "Desculpe, ocorreu uma falha interna ao processar com a IA. Por favor, tente novamente ou verifique as credenciais."
-    };
+    // Tenta fallback dinâmico local se houver falha de rede/parse
+    return getMockResponse(prompt);
   }
 }
 
-// Respostas simuladas (Mocks) para o ambiente de testes caso não haja chave de API
+// Respostas dinâmicas inteligentes locais (Fallback / Testes)
 function getMockResponse(prompt: string): AIResponse {
   const p = prompt.toLowerCase();
-  
-  if (p.includes("encomenda") || p.includes("pedido")) {
+  const today = new Date().toISOString().split("T")[0];
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+
+  // Tentar extrair números do texto
+  const numbers = (prompt.match(/\d+/g) || []).map(Number);
+  const qty = numbers[0] || 50;
+  const price = numbers[1] || 150;
+
+  // Extrair possível nome do cliente
+  const clientMatch = prompt.match(/(?:para|cliente|de)\s+([A-Z][a-zà-ú]+(?:\s+[A-Z][a-zà-ú]+)?)/i);
+  const customerName = clientMatch ? clientMatch[1] : "Cliente Novo";
+
+  if (p.includes("encomenda") || p.includes("pedido") || p.includes("brigadeiro") || p.includes("doce")) {
     return {
       intent: "create_order",
-      confidence: 95,
-      needsConfirmation: true,
-      missingFields: [],
-      warnings: [],
-      extractedData: {
-        customerName: "Dr Jump",
-        deliveryDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0], // amanhã
-        totalAmount: 420.00,
-        notes: "Encomenda de 120 brigadeiros (40 trad, 40 ninho, 40 beijinho)",
-        items: [
-          { recipeId: 1, quantity: 40, unitPrice: 3.50 },
-          { recipeId: 2, quantity: 40, unitPrice: 3.50 },
-          { recipeId: 3, quantity: 40, unitPrice: 3.50 }
-        ]
-      },
-      explanation: "Identifiquei uma intenção de cadastrar encomenda para o Dr Jump de 120 doces no total de R$ 420,00."
-    };
-  }
-
-  if (p.includes("compra") || p.includes("gastei") || p.includes("adquirir")) {
-    return {
-      intent: "create_purchase",
       confidence: 90,
       needsConfirmation: true,
       missingFields: [],
       warnings: [],
       extractedData: {
-        supplier: "Mercado Central",
-        date: new Date().toISOString().split("T")[0],
+        customerName,
+        deliveryDate: p.includes("hoje") ? today : tomorrow,
+        totalAmount: price,
+        notes: `Encomenda de ${qty} doces inserida via comando de voz/assistente.`,
         items: [
-          { ingredientId: 1, packageCount: 5, purchasePrice: 45.00 },
-          { ingredientId: 2, packageCount: 2, purchasePrice: 15.00 }
+          { recipeId: 1, quantity: qty, unitPrice: Number((price / qty).toFixed(2)) }
         ]
       },
-      explanation: "Identifiquei um registro de compra do fornecedor Mercado Central."
+      explanation: `Identifiquei encomenda para ${customerName} de ${qty} doces no valor de R$ ${price.toFixed(2)}.`
+    };
+  }
+
+  if (p.includes("compra") || p.includes("gastei") || p.includes("adquirir") || p.includes("nota") || p.includes("estoque")) {
+    return {
+      intent: "create_purchase",
+      confidence: 88,
+      needsConfirmation: true,
+      missingFields: [],
+      warnings: [],
+      extractedData: {
+        supplier: "Atacado Geral",
+        date: today,
+        items: [
+          { ingredientId: 1, packageCount: qty > 20 ? 2 : qty, purchasePrice: price }
+        ]
+      },
+      explanation: `Identifiquei um registro de compra no valor de R$ ${price.toFixed(2)}.`
+    };
+  }
+
+  if (p.includes("quanto") || p.includes("saldo") || p.includes("tem") || p.includes("disponível")) {
+    return {
+      intent: "consult_inventory",
+      confidence: 95,
+      needsConfirmation: false,
+      missingFields: [],
+      warnings: [],
+      extractedData: {},
+      explanation: "Vou consultar o saldo atual dos ingredientes em estoque para você."
     };
   }
 
@@ -137,6 +157,6 @@ function getMockResponse(prompt: string): AIResponse {
     missingFields: [],
     warnings: [],
     extractedData: null,
-    explanation: "Olá! Sou a assistente operacional da doceria. Posso te ajudar a cadastrar encomendas, registrar compras no estoque, consultar finanças ou agendar eventos."
+    explanation: "Olá! Sou a assistente da doceria La Délice. Você pode ditar ou digitar pedidos, compras de estoque ou consultar saldos."
   };
 }

@@ -14,7 +14,9 @@ import {
   FileText,
   Calendar,
   DollarSign,
-  Boxes
+  Boxes,
+  Mic,
+  MicOff
 } from "lucide-react";
 import { sendMessageToAssistant, executeConfirmAction, executeCancelAction } from "./actions";
 import Image from "next/image";
@@ -42,9 +44,44 @@ export default function AssistenteClient({ conversationId, initialMessages }: As
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [executingMessageId, setExecutingMessageId] = useState<number | null>(null);
+  const [isListening, setIsListening] = useState(false);
   
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const toggleListening = () => {
+    if (typeof window === "undefined") return;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Navegador não possui suporte nativo para ditado por voz. Tente usar o Google Chrome ou Microsoft Edge.");
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "pt-BR";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => setIsListening(true);
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInputValue((prev) => (prev ? `${prev} ${transcript}` : transcript));
+        setIsListening(false);
+      };
+      recognition.onerror = () => setIsListening(false);
+      recognition.onend = () => setIsListening(false);
+
+      recognition.start();
+    } catch {
+      setIsListening(false);
+    }
+  };
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -426,19 +463,25 @@ export default function AssistenteClient({ conversationId, initialMessages }: As
           />
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="p-3.5 rounded-2xl border border-[#ead8cf] bg-white hover:bg-[#fff1f4] text-[#9a6d5c] hover:text-[#c98b9b] transition cursor-pointer"
-            title="Anexar foto de nota fiscal, cupom ou pedido escrito"
+            onClick={toggleListening}
+            className={`p-3.5 rounded-2xl border transition cursor-pointer flex items-center justify-center ${
+              isListening 
+                ? "bg-red-500 border-red-600 text-white animate-bounce shadow-md" 
+                : "border-[#ead8cf] bg-white hover:bg-[#fff1f4] text-[#9a6d5c] hover:text-[#c98b9b]"
+            }`}
+            title={isListening ? "Ouvindo... Clique para parar" : "Ditar comando por voz (Microfone)"}
           >
-            <ImageIcon className="h-5 w-5" />
+            {isListening ? <MicOff className="h-5 w-5 animate-pulse" /> : <Mic className="h-5 w-5" />}
           </button>
-          
+
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Digite sua mensagem, encomenda ou comando operacional..."
-            className="flex-1 rounded-2xl border border-[#ead8cf] bg-[#fff8ef]/25 px-4.5 py-3.5 text-sm font-semibold focus:outline-none placeholder:text-[#9a6d5c]/60 text-[#5b382d]"
+            placeholder={isListening ? "Fale seu comando agora..." : "Digite ou dite sua encomenda / comando operacional..."}
+            className={`flex-1 rounded-2xl border px-4.5 py-3.5 text-sm font-semibold focus:outline-none transition ${
+              isListening ? "border-red-400 bg-red-50/40 text-red-900 placeholder:text-red-400" : "border-[#ead8cf] bg-[#fff8ef]/25 placeholder:text-[#9a6d5c]/60 text-[#5b382d]"
+            }`}
           />
 
           <button

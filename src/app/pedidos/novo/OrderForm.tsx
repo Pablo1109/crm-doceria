@@ -2,11 +2,22 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Save, Trash2, RotateCcw } from "lucide-react";
 import { createOrder } from "@/app/pedidos/actions";
 
-type Recipe = { id: number; name: string; suggestedPrice: number };
-type Item = { recipeId: number; quantity: number; unitPrice: number };
+type Recipe = { 
+  id: number; 
+  name: string; 
+  yield: number; 
+  recipeTotalPrice: number; 
+  suggestedUnitPrice: number; 
+};
+
+type Item = { 
+  recipeId: number; 
+  quantity: number; 
+  unitPrice: number; 
+};
 
 export default function OrderForm({ recipes }: { recipes: Recipe[] }) {
   const router = useRouter();
@@ -14,7 +25,7 @@ export default function OrderForm({ recipes }: { recipes: Recipe[] }) {
   const [saving, setSaving] = useState(false);
 
   function addItem() {
-    setItems([...items, { recipeId: 0, quantity: 1, unitPrice: 0 }]);
+    setItems([...items, { recipeId: 0, quantity: 30, unitPrice: 0 }]);
   }
 
   function updateItem(index: number, field: keyof Item, value: number) {
@@ -23,7 +34,14 @@ export default function OrderForm({ recipes }: { recipes: Recipe[] }) {
       const up = { ...it, [field]: value };
       if (field === "recipeId") {
         const r = recipes.find(x => x.id === value);
-        up.unitPrice = r ? r.suggestedPrice : 0;
+        if (r) {
+          up.unitPrice = Number(r.suggestedUnitPrice.toFixed(2));
+          if (up.quantity === 0 || up.quantity === 1) {
+            up.quantity = r.yield || 30;
+          }
+        } else {
+          up.unitPrice = 0;
+        }
       }
       return up;
     }));
@@ -39,54 +57,180 @@ export default function OrderForm({ recipes }: { recipes: Recipe[] }) {
     router.push(`/pedidos/${id}?success=pedido`);
   }
 
-  return <div className="mx-auto max-w-5xl space-y-6">
-    <Link href="/pedidos" className="inline-flex items-center text-sm font-black text-slate-500 hover:text-rose-600"><ArrowLeft className="mr-2 h-4 w-4" />Voltar</Link>
-    <div><p className="text-sm font-black uppercase tracking-widest text-rose-400">Nova encomenda</p><h1 className="text-3xl font-black text-slate-950">Cadastrar pedido</h1><p className="text-slate-500">Clique em Adicionar produto, escolha a receita/produto e informe quantidade e valor.</p></div>
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-4 rounded-[2rem] bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-black">Cliente</h2>
-          <input name="customerName" required placeholder="Nome do cliente" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
-          <input name="customerPhone" placeholder="WhatsApp / telefone" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
-          
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] font-black uppercase text-slate-400">Data de Entrega</label>
-              <input name="deliveryDate" required type="date" className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
+  return (
+    <div className="mx-auto max-w-5xl space-y-6">
+      <Link href="/pedidos" className="inline-flex items-center text-sm font-black text-slate-500 hover:text-rose-600">
+        <ArrowLeft className="mr-2 h-4 w-4" />Voltar
+      </Link>
+      
+      <div>
+        <p className="text-sm font-black uppercase tracking-widest text-rose-400">Nova encomenda</p>
+        <h1 className="text-3xl font-black text-slate-950">Cadastrar pedido</h1>
+        <p className="text-slate-500">Informe a quantidade em <b>unidades de doces</b> e edite o valor unitário livremente caso queira um preço personalizado.</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="space-y-4 rounded-[2rem] bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-black">Cliente</h2>
+            <input name="customerName" required placeholder="Nome do cliente" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
+            <input name="customerPhone" placeholder="WhatsApp / telefone" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400">Data de Entrega</label>
+                <input name="deliveryDate" required type="date" className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400">Horário de Entrega</label>
+                <input name="deliveryTime" type="time" className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
+              </div>
             </div>
-            <div>
-              <label className="text-[10px] font-black uppercase text-slate-400">Horário de Entrega</label>
-              <input name="deliveryTime" type="time" className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400">Data da Festa</label>
+                <input name="partyDate" type="date" className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400">Horário da Festa</label>
+                <input name="partyTime" type="time" className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
+              </div>
             </div>
+
+            <select name="deliveryType" className="w-full rounded-2xl border border-slate-200 px-4 py-3">
+              <option value="retirada">Retirada</option>
+              <option value="entrega">Entrega</option>
+            </select>
+            <input name="signal" type="number" step="0.01" placeholder="Sinal pago (R$)" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] font-black uppercase text-slate-400">Data da Festa</label>
-              <input name="partyDate" type="date" className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
-            </div>
-            <div>
-              <label className="text-[10px] font-black uppercase text-slate-400">Horário da Festa</label>
-              <input name="partyTime" type="time" className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
-            </div>
+          <div className="rounded-[2rem] bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-xl font-black">Observações</h2>
+            <textarea name="notes" rows={12} placeholder="Tema, cores, recheio, endereço, detalhes combinados..." className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
           </div>
-
-          <select name="deliveryType" className="w-full rounded-2xl border border-slate-200 px-4 py-3">
-            <option value="retirada">Retirada</option>
-            <option value="entrega">Entrega</option>
-          </select>
-          <input name="signal" type="number" step="0.01" placeholder="Sinal pago" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
         </div>
+
         <div className="rounded-[2rem] bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-xl font-black">Observações</h2>
-          <textarea name="notes" rows={12} placeholder="Tema, cores, recheio, endereço, detalhes combinados..." className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
+          <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-xl font-black">Produtos do pedido</h2>
+              <p className="text-sm text-slate-500">A quantidade é informada em <b>unidades de doces</b>. O consumo do estoque calcula automaticamente as receitas correspondentes.</p>
+            </div>
+            <button type="button" onClick={addItem} className="inline-flex items-center justify-center rounded-2xl bg-rose-50 px-4 py-2 text-sm font-black text-rose-600 hover:bg-rose-100">
+              <Plus className="mr-2 h-4 w-4" />Adicionar produto
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {items.map((item, index) => {
+              const selectedRecipe = recipes.find(r => r.id === item.recipeId);
+              const recipeYield = selectedRecipe?.yield || 1;
+              const consumedRecipes = (item.quantity / recipeYield).toFixed(1);
+              const suggested = selectedRecipe ? Number(selectedRecipe.suggestedUnitPrice.toFixed(2)) : 0;
+
+              return (
+                <div key={index} className="grid gap-4 rounded-3xl border border-slate-100 p-4 md:grid-cols-[1.2fr_130px_160px_130px_40px] md:items-end bg-slate-50/50">
+                  
+                  {/* Seleção de Receita */}
+                  <label className="text-xs font-black uppercase text-slate-400">
+                    Produto / Receita
+                    <select 
+                      value={item.recipeId} 
+                      onChange={e => updateItem(index, "recipeId", Number(e.target.value))} 
+                      className="mt-1.5 w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm normal-case font-bold text-slate-900"
+                    >
+                      <option value={0}>Escolha um produto</option>
+                      {recipes.map(r => (
+                        <option key={r.id} value={r.id}>
+                          {r.name} (Rendimento: {r.yield} un)
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {/* Quantidade em UNIDADES de doces */}
+                  <label className="text-xs font-black uppercase text-slate-400">
+                    Qtd. (doces)
+                    <input 
+                      type="number" 
+                      min="1" 
+                      value={item.quantity} 
+                      onChange={e => updateItem(index, "quantity", Number(e.target.value))} 
+                      className="mt-1.5 w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 font-bold text-slate-900" 
+                    />
+                    {selectedRecipe && (
+                      <span className="mt-1 block text-[10px] font-bold text-rose-500">
+                        = {consumedRecipes} rec. estoque
+                      </span>
+                    )}
+                  </label>
+
+                  {/* Preço Unitário por Doce (Editável Manualmente) */}
+                  <label className="text-xs font-black uppercase text-slate-400">
+                    Preço por doce (R$)
+                    <div className="relative mt-1.5">
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        value={item.unitPrice} 
+                        onChange={e => updateItem(index, "unitPrice", Number(e.target.value))} 
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 font-bold text-slate-900" 
+                      />
+                    </div>
+                    {selectedRecipe && (
+                      <button 
+                        type="button" 
+                        onClick={() => updateItem(index, "unitPrice", suggested)}
+                        className="mt-1 flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-rose-600 transition"
+                        title="Restaurar preço padrão sugerido"
+                      >
+                        <RotateCcw className="h-3 w-3" /> Sugerido: R$ {suggested.toFixed(2)}/un
+                      </button>
+                    )}
+                  </label>
+
+                  {/* Subtotal do item */}
+                  <div>
+                    <p className="text-xs font-black uppercase text-slate-400">Subtotal</p>
+                    <p className="mt-3 text-lg font-black text-rose-600">
+                      R$ {(item.quantity * item.unitPrice).toFixed(2)}
+                    </p>
+                  </div>
+
+                  {/* Botão de Remover */}
+                  <button 
+                    type="button" 
+                    onClick={() => setItems(items.filter((_, i) => i !== index))} 
+                    className="rounded-xl p-2.5 text-red-400 hover:bg-red-50 hover:text-red-600 self-center"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                </div>
+              );
+            })}
+
+            {items.length === 0 && (
+              <p className="rounded-3xl bg-slate-50 p-8 text-center text-slate-400">
+                Clique em “Adicionar produto” para escolher os doces desta encomenda.
+              </p>
+            )}
+          </div>
+
+          <div className="mt-6 flex flex-col gap-4 border-t border-slate-100 pt-5 md:flex-row md:items-center md:justify-between">
+            <p className="text-3xl font-black text-slate-950">
+              Total: <span className="text-rose-600">R$ {total.toFixed(2)}</span>
+            </p>
+            <button 
+              disabled={validItems.length === 0 || saving} 
+              className="inline-flex items-center justify-center rounded-2xl bg-slate-950 px-6 py-3 font-black text-white hover:bg-rose-600 disabled:opacity-50 transition cursor-pointer"
+            >
+              <Save className="mr-2 h-5 w-5" />
+              {saving ? "Salvando..." : "Salvar pedido"}
+            </button>
+          </div>
         </div>
-      </div>
-      <div className="rounded-[2rem] bg-white p-6 shadow-sm">
-        <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"><div><h2 className="text-xl font-black">Produtos do pedido</h2><p className="text-sm text-slate-500">Produto vem das receitas cadastradas. Cadastre uma receita se a lista estiver vazia.</p></div><button type="button" onClick={addItem} className="inline-flex items-center justify-center rounded-2xl bg-rose-50 px-4 py-2 text-sm font-black text-rose-600 hover:bg-rose-100"><Plus className="mr-2 h-4 w-4" />Adicionar produto</button></div>
-        <div className="space-y-3">{items.map((item, index) => <div key={index} className="grid gap-3 rounded-3xl border border-slate-100 p-4 md:grid-cols-[1fr_100px_150px_120px_40px] md:items-end"><label className="text-xs font-black uppercase text-slate-400">Produto<select value={item.recipeId} onChange={e => updateItem(index, "recipeId", Number(e.target.value))} className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm normal-case text-slate-900"><option value={0}>Escolha um produto</option>{recipes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}</select></label><label className="text-xs font-black uppercase text-slate-400">Qtd<input type="number" min="1" value={item.quantity} onChange={e => updateItem(index, "quantity", Number(e.target.value))} className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900" /></label><label className="text-xs font-black uppercase text-slate-400">Preço unit.<input type="number" step="0.01" value={item.unitPrice} onChange={e => updateItem(index, "unitPrice", Number(e.target.value))} className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900" /></label><div><p className="text-xs font-black uppercase text-slate-400">Subtotal</p><p className="mt-3 font-black text-rose-600">R$ {(item.quantity * item.unitPrice).toFixed(2)}</p></div><button type="button" onClick={() => setItems(items.filter((_, i) => i !== index))} className="rounded-xl p-2 text-red-400 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button></div>)}{items.length === 0 && <p className="rounded-3xl bg-slate-50 p-8 text-center text-slate-400">Clique em “Adicionar produto” para escolher o produto desta encomenda.</p>}</div>
-        <div className="mt-6 flex flex-col gap-4 border-t border-slate-100 pt-5 md:flex-row md:items-center md:justify-between"><p className="text-3xl font-black text-slate-950">Total: <span className="text-rose-600">R$ {total.toFixed(2)}</span></p><button disabled={validItems.length === 0 || saving} className="inline-flex items-center justify-center rounded-2xl bg-slate-950 px-6 py-3 font-black text-white hover:bg-rose-600 disabled:opacity-50"><Save className="mr-2 h-5 w-5" />{saving ? "Salvando..." : "Salvar pedido"}</button></div>
-      </div>
-    </form>
-  </div>;
+      </form>
+    </div>
+  );
 }
