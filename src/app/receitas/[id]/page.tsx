@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { ArrowLeft, Trash2, Plus, Scale } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { addIngredientToRecipeFromForm, removeIngredientFromRecipe } from "@/app/receitas/actions";
+import { addIngredientToRecipeFromForm, removeIngredientFromRecipe, updateRecipe } from "@/app/receitas/actions";
 import SubmitButton from "@/components/SubmitButton";
 import Toast from "@/components/Toast";
 
@@ -167,6 +167,45 @@ export default async function ReceitaDetailPage({ params, searchParams }: { para
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="card-soft rounded-[2rem] border border-[#ead8cf] p-6 bg-white">
+            <h2 className="mb-4 border-b border-[#ead8cf] pb-2 text-lg font-black text-[#5b382d]">Editar parâmetros da receita</h2>
+            <form action={async (formData: FormData) => {
+              "use server";
+              await updateRecipe(recipeId, formData);
+            }} className="space-y-4">
+              <label className="block text-xs font-black uppercase tracking-wider text-[#9a6d5c]">
+                Nome da Receita
+                <input name="name" required defaultValue={recipe.name} className="mt-1.5 w-full rounded-2xl border border-[#ead8cf] px-3.5 py-2.5 text-sm font-bold text-[#5b382d]" />
+              </label>
+
+              <label className="block text-xs font-black uppercase tracking-wider text-[#9a6d5c]">
+                Descrição
+                <input name="description" defaultValue={recipe.description || ""} className="mt-1.5 w-full rounded-2xl border border-[#ead8cf] px-3.5 py-2.5 text-sm" />
+              </label>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block text-xs font-black uppercase tracking-wider text-[#9a6d5c]">
+                  Rendimento (un)
+                  <input name="yield" type="number" required defaultValue={recipe.yield} className="mt-1.5 w-full rounded-2xl border border-[#ead8cf] px-3.5 py-2.5 text-sm font-bold" />
+                </label>
+
+                <label className="block text-xs font-black uppercase tracking-wider text-[#9a6d5c]">
+                  Markup (%)
+                  <input name="markup" type="number" step="0.1" required defaultValue={recipe.markup || "100"} className="mt-1.5 w-full rounded-2xl border border-[#ead8cf] px-3.5 py-2.5 text-sm font-bold" />
+                </label>
+              </div>
+
+              <label className="block text-xs font-black uppercase tracking-wider text-[#9a6d5c]">
+                Mão de Obra (R$)
+                <input name="laborCost" type="number" step="0.01" required defaultValue={recipe.laborCost || "0"} className="mt-1.5 w-full rounded-2xl border border-[#ead8cf] px-3.5 py-2.5 text-sm font-bold" />
+              </label>
+
+              <SubmitButton pendingText="Salvando..." className="w-full rounded-2xl bg-[#5b382d] py-3 text-sm font-black text-white hover:bg-[#c98b9b] transition">
+                Salvar Alterações
+              </SubmitButton>
+            </form>
           </div>
         </div>
       </div>

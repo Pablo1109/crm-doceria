@@ -67,6 +67,49 @@ export async function createOrder(formData: FormData, items: OrderInputItem[]) {
   return newOrder.id;
 }
 
+export async function updateOrder(orderId: number, formData: FormData, items: OrderInputItem[]) {
+  const customerName = String(formData.get("customerName") || "").trim(); 
+  const customerPhone = String(formData.get("customerPhone") || "").trim(); 
+  const deliveryDate = String(formData.get("deliveryDate") || ""); 
+  const deliveryTime = String(formData.get("deliveryTime") || ""); 
+  const partyDate = String(formData.get("partyDate") || "") || null;
+  const partyTime = String(formData.get("partyTime") || "") || null;
+  const deliveryType = String(formData.get("deliveryType") || "retirada"); 
+  const signal = String(formData.get("signal") || "0"); 
+  const notes = String(formData.get("notes") || "");
+  
+  const totalAmount = items.reduce((a, i) => a + Number(i.quantity || 0) * Number(i.unitPrice || 0), 0);
+  const fullNotes = [`Tipo: ${deliveryType}`, `Sinal pago: R$ ${signal}`, notes].filter(Boolean).join("\n");
+
+  await db.update(orders).set({
+    customerName,
+    customerPhone,
+    deliveryDate,
+    deliveryTime: deliveryTime || null,
+    partyDate: partyDate || null,
+    partyTime: partyTime || null,
+    notes: fullNotes,
+    totalAmount: totalAmount.toFixed(2)
+  }).where(eq(orders.id, orderId));
+
+  // Excluir itens antigos e reinserir atualizados
+  await db.delete(orderItems).where(eq(orderItems.orderId, orderId));
+  for (const item of items) {
+    await db.insert(orderItems).values({
+      orderId,
+      recipeId: Number(item.recipeId),
+      quantity: Number(item.quantity),
+      unitPrice: Number(item.unitPrice).toFixed(2)
+    });
+  }
+
+  revalidatePath("/pedidos");
+  revalidatePath(`/pedidos/${orderId}`);
+  revalidatePath("/financeiro");
+  revalidatePath("/");
+  return orderId;
+}
+
 export async function updateOrderStatus(id: number, status: string) {
   const [current] = await db.select().from(orders).where(eq(orders.id, id));
   if (!current) return;

@@ -100,7 +100,52 @@ function getMockResponse(prompt: string): AIResponse {
   const clientMatch = prompt.match(/(?:para|cliente|de)\s+([A-Z][a-zà-ú]+(?:\s+[A-Z][a-zà-ú]+)?)/i);
   const customerName = clientMatch ? clientMatch[1] : "Cliente Novo";
 
-  if (p.includes("encomenda") || p.includes("pedido") || p.includes("brigadeiro") || p.includes("doce")) {
+  // Palavras-chave para Compras / Insumos de Estoque (ex: "comprei 5 caixas de creme de leite")
+  const isPurchase = 
+    p.includes("compra") || p.includes("comprei") || p.includes("comprar") || 
+    p.includes("gastei") || p.includes("gasto") || p.includes("adquiri") || 
+    p.includes("adquirir") || p.includes("paguei") || p.includes("peguei") || 
+    p.includes("trouxe") || p.includes("chegou") || p.includes("caixa") || 
+    p.includes("lata") || p.includes("pacote") || p.includes("saco") || 
+    p.includes("creme de leite") || p.includes("leite condensado");
+
+  // Palavras-chave para Encomendas / Pedidos
+  const isOrder = 
+    p.includes("encomenda") || p.includes("encomendei") || p.includes("pedido") || 
+    p.includes("pedi") || p.includes("vendi") || p.includes("venda") || 
+    p.includes("brigadeiro") || p.includes("doce") || p.includes("bolo");
+
+  if (isPurchase) {
+    // Detectar ingrediente mencionado no texto
+    let itemDesc = "creme de leite";
+    if (p.includes("leite condensado")) itemDesc = "leite condensado";
+    else if (p.includes("creme de leite")) itemDesc = "creme de leite";
+    else if (p.includes("chocolate") || p.includes("cacau")) itemDesc = "chocolate";
+    else if (p.includes("açúcar")) itemDesc = "açúcar";
+    else if (p.includes("farinha") || p.includes("trigo")) itemDesc = "farinha de trigo";
+    else if (p.includes("manteiga") || p.includes("margarina")) itemDesc = "manteiga";
+
+    const packageCount = qty > 0 ? (qty > 100 ? 1 : qty) : 5;
+    const estPrice = price > 0 && price !== qty ? price : packageCount * 7.50;
+
+    return {
+      intent: "create_purchase",
+      confidence: 92,
+      needsConfirmation: true,
+      missingFields: [],
+      warnings: [],
+      extractedData: {
+        supplier: "Atacado / Mercado",
+        date: today,
+        items: [
+          { ingredientId: 1, packageCount, purchasePrice: Number(estPrice.toFixed(2)) }
+        ]
+      },
+      explanation: `Identifiquei o registro de compra de ${packageCount} embalagens de ${itemDesc} no valor aproximado de R$ ${estPrice.toFixed(2)}.`
+    };
+  }
+
+  if (isOrder) {
     return {
       intent: "create_order",
       confidence: 90,
@@ -117,24 +162,6 @@ function getMockResponse(prompt: string): AIResponse {
         ]
       },
       explanation: `Identifiquei encomenda para ${customerName} de ${qty} doces no valor de R$ ${price.toFixed(2)}.`
-    };
-  }
-
-  if (p.includes("compra") || p.includes("gastei") || p.includes("adquirir") || p.includes("nota") || p.includes("estoque")) {
-    return {
-      intent: "create_purchase",
-      confidence: 88,
-      needsConfirmation: true,
-      missingFields: [],
-      warnings: [],
-      extractedData: {
-        supplier: "Atacado Geral",
-        date: today,
-        items: [
-          { ingredientId: 1, packageCount: qty > 20 ? 2 : qty, purchasePrice: price }
-        ]
-      },
-      explanation: `Identifiquei um registro de compra no valor de R$ ${price.toFixed(2)}.`
     };
   }
 

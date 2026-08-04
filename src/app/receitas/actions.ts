@@ -98,4 +98,29 @@ export async function deleteRecipe(id: number) {
   await db.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, id));
   await db.delete(recipes).where(eq(recipes.id, id));
   revalidatePath("/receitas");
+  redirect("/receitas?success=excluido");
+}
+
+export async function updateRecipe(id: number, formData: FormData) {
+  const name = String(formData.get("name") || "").trim();
+  const description = String(formData.get("description") || "").trim();
+  const yieldValue = Number(formData.get("yield") || "35");
+  const laborCost = String(formData.get("laborCost") || "0").replace(",", ".");
+  const markup = String(formData.get("markup") || "100").replace(",", ".");
+
+  if (!id || !name) return;
+
+  await db.update(recipes).set({
+    name,
+    description,
+    yield: yieldValue,
+    laborCost,
+    markup,
+  }).where(eq(recipes.id, id));
+
+  revalidatePath("/receitas");
+  revalidatePath(`/receitas/${id}`);
+  revalidatePath("/pedidos");
+  revalidatePath("/");
+  redirect(`/receitas/${id}?success=editado`);
 }

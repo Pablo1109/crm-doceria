@@ -486,26 +486,26 @@ export default function FinanceiroClient({ transactions, orderCosts, pendingOrde
                   <td className={`px-6 py-4 font-black text-sm ${t.type === "income" ? "text-emerald-600" : "text-slate-800"}`}>
                     {t.type === "income" ? "+" : "-"} {money(t.amount)}
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    {t.category === "pedido" || t.category === "ingrediente" ? (
-                      <span className="text-[10px] text-slate-400 font-bold" title="Lançamentos automáticos devem ser excluídos nas abas de Pedidos ou Estoque.">Automático</span>
-                    ) : (
-                      <>
-                        <Link href={`/financeiro/edit/${t.id}`} className="inline-flex items-center gap-1 text-sm text-[#5b382d] hover:underline">
-                          <Edit className="h-4 w-4" /> Editar
-                        </Link>
-                        <form action={async () => {
-                          if (confirm("Excluir este lançamento manual do cofre?")) {
-                            await deleteTransaction(t.id);
-                          }
-                        }}>
-                          <button type="submit" className="text-red-400 hover:text-red-600 transition p-1 hover:bg-red-50 rounded-lg cursor-pointer">
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </form>
-                      </>
-                    
-                                )}
+                  <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                    <Link 
+                      href={`/financeiro/edit/${t.id}`} 
+                      className="inline-flex items-center gap-1 text-xs font-bold text-[#5b382d] hover:text-[#c98b9b] bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 rounded-xl transition"
+                    >
+                      <Edit className="h-3.5 w-3.5" /> Editar
+                    </Link>
+                    <form action={async () => {
+                      if (confirm(`Excluir o lançamento "${t.description}" (R$ ${Number(t.amount).toFixed(2)}) do cofre?`)) {
+                        await deleteTransaction(t.id);
+                      }
+                    }}>
+                      <button 
+                        type="submit" 
+                        className="text-red-400 hover:text-red-600 transition p-1.5 hover:bg-red-50 rounded-xl cursor-pointer"
+                        title="Excluir lançamento"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </form>
                   </td>
                 </tr>
               ))}

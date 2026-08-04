@@ -8,8 +8,9 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default async function EditTransactionPage({ params }: { params: { id: string } }) {
-  const transactionId = Number(params.id);
+export default async function EditTransactionPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const transactionId = Number(id);
   const transaction = await db.select().from(financialTransactions).where(eq(financialTransactions.id, transactionId)).then(rows => rows[0]);
 
   if (!transaction) {

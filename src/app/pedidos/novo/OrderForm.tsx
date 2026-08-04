@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Save, Trash2, RotateCcw } from "lucide-react";
-import { createOrder } from "@/app/pedidos/actions";
+import { createOrder, updateOrder } from "@/app/pedidos/actions";
 
 type Recipe = { 
   id: number; 
@@ -19,9 +19,29 @@ type Item = {
   unitPrice: number; 
 };
 
-export default function OrderForm({ recipes }: { recipes: Recipe[] }) {
+type InitialOrder = {
+  id: number;
+  customerName: string;
+  customerPhone?: string | null;
+  deliveryDate: string;
+  deliveryTime?: string | null;
+  partyDate?: string | null;
+  partyTime?: string | null;
+  deliveryType?: string;
+  signal?: string;
+  notes?: string | null;
+  items: Item[];
+};
+
+export default function OrderForm({ 
+  recipes, 
+  initialOrder 
+}: { 
+  recipes: Recipe[]; 
+  initialOrder?: InitialOrder; 
+}) {
   const router = useRouter();
-  const [items, setItems] = useState<Item[]>([]);
+  const [items, setItems] = useState<Item[]>(initialOrder?.items || []);
   const [saving, setSaving] = useState(false);
 
   function addItem() {
@@ -53,19 +73,30 @@ export default function OrderForm({ recipes }: { recipes: Recipe[] }) {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSaving(true);
-    const id = await createOrder(new FormData(e.currentTarget), validItems);
-    router.push(`/pedidos/${id}?success=pedido`);
+    const formData = new FormData(e.currentTarget);
+    
+    if (initialOrder?.id) {
+      await updateOrder(initialOrder.id, formData, validItems);
+      router.push(`/pedidos/${initialOrder.id}?success=editado`);
+    } else {
+      const id = await createOrder(formData, validItems);
+      router.push(`/pedidos/${id}?success=pedido`);
+    }
   }
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <Link href="/pedidos" className="inline-flex items-center text-sm font-black text-slate-500 hover:text-rose-600">
+      <Link href={initialOrder?.id ? `/pedidos/${initialOrder.id}` : "/pedidos"} className="inline-flex items-center text-sm font-black text-slate-500 hover:text-rose-600">
         <ArrowLeft className="mr-2 h-4 w-4" />Voltar
       </Link>
       
       <div>
-        <p className="text-sm font-black uppercase tracking-widest text-rose-400">Nova encomenda</p>
-        <h1 className="text-3xl font-black text-slate-950">Cadastrar pedido</h1>
+        <p className="text-sm font-black uppercase tracking-widest text-rose-400">
+          {initialOrder ? `Editar Encomenda #${String(initialOrder.id).padStart(4, "0")}` : "Nova encomenda"}
+        </p>
+        <h1 className="text-3xl font-black text-slate-950">
+          {initialOrder ? `Editar pedido de ${initialOrder.customerName}` : "Cadastrar pedido"}
+        </h1>
         <p className="text-slate-500">Informe a quantidade em <b>unidades de doces</b> e edite o valor unitário livremente caso queira um preço personalizado.</p>
       </div>
 
@@ -73,41 +104,41 @@ export default function OrderForm({ recipes }: { recipes: Recipe[] }) {
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="space-y-4 rounded-[2rem] bg-white p-6 shadow-sm">
             <h2 className="text-xl font-black">Cliente</h2>
-            <input name="customerName" required placeholder="Nome do cliente" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
-            <input name="customerPhone" placeholder="WhatsApp / telefone" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
+            <input name="customerName" required defaultValue={initialOrder?.customerName || ""} placeholder="Nome do cliente" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
+            <input name="customerPhone" defaultValue={initialOrder?.customerPhone || ""} placeholder="WhatsApp / telefone" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
             
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[10px] font-black uppercase text-slate-400">Data de Entrega</label>
-                <input name="deliveryDate" required type="date" className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
+                <input name="deliveryDate" required type="date" defaultValue={initialOrder?.deliveryDate || ""} className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
               </div>
               <div>
                 <label className="text-[10px] font-black uppercase text-slate-400">Horário de Entrega</label>
-                <input name="deliveryTime" type="time" className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
+                <input name="deliveryTime" type="time" defaultValue={initialOrder?.deliveryTime || ""} className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[10px] font-black uppercase text-slate-400">Data da Festa</label>
-                <input name="partyDate" type="date" className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
+                <input name="partyDate" type="date" defaultValue={initialOrder?.partyDate || ""} className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
               </div>
               <div>
                 <label className="text-[10px] font-black uppercase text-slate-400">Horário da Festa</label>
-                <input name="partyTime" type="time" className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
+                <input name="partyTime" type="time" defaultValue={initialOrder?.partyTime || ""} className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3" />
               </div>
             </div>
 
-            <select name="deliveryType" className="w-full rounded-2xl border border-slate-200 px-4 py-3">
+            <select name="deliveryType" defaultValue={initialOrder?.deliveryType || "retirada"} className="w-full rounded-2xl border border-slate-200 px-4 py-3">
               <option value="retirada">Retirada</option>
               <option value="entrega">Entrega</option>
             </select>
-            <input name="signal" type="number" step="0.01" placeholder="Sinal pago (R$)" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
+            <input name="signal" type="number" step="0.01" defaultValue={initialOrder?.signal || ""} placeholder="Sinal pago (R$)" className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
           </div>
 
           <div className="rounded-[2rem] bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-xl font-black">Observações</h2>
-            <textarea name="notes" rows={12} placeholder="Tema, cores, recheio, endereço, detalhes combinados..." className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
+            <textarea name="notes" rows={12} defaultValue={initialOrder?.notes || ""} placeholder="Tema, cores, recheio, endereço, detalhes combinados..." className="w-full rounded-2xl border border-slate-200 px-4 py-3" />
           </div>
         </div>
 
@@ -226,7 +257,7 @@ export default function OrderForm({ recipes }: { recipes: Recipe[] }) {
               className="inline-flex items-center justify-center rounded-2xl bg-slate-950 px-6 py-3 font-black text-white hover:bg-rose-600 disabled:opacity-50 transition cursor-pointer"
             >
               <Save className="mr-2 h-5 w-5" />
-              {saving ? "Salvando..." : "Salvar pedido"}
+              {saving ? "Salvando..." : initialOrder ? "Atualizar pedido" : "Salvar pedido"}
             </button>
           </div>
         </div>

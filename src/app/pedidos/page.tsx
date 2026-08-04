@@ -79,7 +79,13 @@ export default async function PedidosPage() {
                     href={`/pedidos/${order.id}`}
                     className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded font-bold transition-colors"
                   >
-                    Ver / Orçamento
+                    Ver
+                  </Link>
+                  <Link 
+                    href={`/pedidos/edit/${order.id}`}
+                    className="text-xs bg-[#fff1f4] hover:bg-rose-100 text-[#5b382d] px-2 py-1 rounded font-bold transition-colors"
+                  >
+                    Editar
                   </Link>
                   <StatusSelect id={order.id} currentStatus={order.status} />
                   <form className="inline" action={async () => { "use server"; await deleteOrder(order.id); }}>

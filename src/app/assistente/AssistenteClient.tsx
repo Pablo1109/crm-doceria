@@ -363,6 +363,8 @@ export default function AssistenteClient({ conversationId, initialMessages }: As
     }
   };
 
+  const [showGuide, setShowGuide] = useState(false);
+
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] max-w-5xl mx-auto border border-[#ead8cf] bg-white/70 rounded-[2.5rem] shadow-sm overflow-hidden backdrop-blur-md">
       
@@ -377,17 +379,53 @@ export default function AssistenteClient({ conversationId, initialMessages }: As
             <p className="text-[10px] font-bold text-[#9a6d5c]">Conectada ao Gemini 1.5 Flash • La Délice ERP</p>
           </div>
         </div>
-        <button 
-          onClick={() => {
-            if (confirm("Deseja limpar todo o histórico local desta conversa?")) {
-              setMessages([]);
-            }
-          }}
-          className="text-[#9a6d5c] hover:text-rose-500 p-2.5 rounded-xl hover:bg-rose-50/50 transition cursor-pointer"
-        >
-          <Trash2 className="h-4.5 w-4.5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowGuide(!showGuide)}
+            className="inline-flex items-center gap-1.5 text-xs font-black text-[#5b382d] bg-[#fff8ef] hover:bg-[#fff1f4] border border-[#ead8cf] px-3 py-2 rounded-xl transition cursor-pointer"
+          >
+            <HelpCircle className="h-4 w-4 text-[#c98b9b]" /> Como falar com a IA
+          </button>
+          <button 
+            onClick={() => {
+              if (confirm("Deseja limpar todo o histórico local desta conversa?")) {
+                setMessages([]);
+              }
+            }}
+            className="text-[#9a6d5c] hover:text-rose-500 p-2.5 rounded-xl hover:bg-rose-50/50 transition cursor-pointer"
+            title="Limpar histórico"
+          >
+            <Trash2 className="h-4.5 w-4.5" />
+          </button>
+        </div>
       </div>
+
+      {/* Painel Guia de Voz e Frases */}
+      {showGuide && (
+        <div className="bg-[#fff8ef] border-b border-[#ead8cf] p-4 text-xs space-y-2 animate-toast-in">
+          <p className="font-black text-[#5b382d] uppercase tracking-wider text-[11px]">Exemplos práticos de frases para ditar ou digitar:</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[#7b4b3f]">
+            <div className="bg-white p-2.5 rounded-xl border border-[#ead8cf]">
+              <span className="font-bold text-[#5b382d] block mb-0.5">🛒 Registrar Compras de Estoque:</span>
+              <p className="italic font-semibold">"Comprei 5 caixas de creme de leite por 30 reais"</p>
+              <p className="italic font-semibold mt-1">"Gastei 45 reais em 2 pacotes de chocolate"</p>
+            </div>
+            <div className="bg-white p-2.5 rounded-xl border border-[#ead8cf]">
+              <span className="font-bold text-[#5b382d] block mb-0.5">🎂 Cadastrar Encomendas / Pedidos:</span>
+              <p className="italic font-semibold">"Encomenda pra Maria: 90 brigadeiros por 180 reais pra amanhã"</p>
+              <p className="italic font-semibold mt-1">"Novo pedido do Dr Jump de 120 doces por 420 reais com sinal de 100"</p>
+            </div>
+            <div className="bg-white p-2.5 rounded-xl border border-[#ead8cf]">
+              <span className="font-bold text-[#5b382d] block mb-0.5">📦 Consultar Saldo em Estoque:</span>
+              <p className="italic font-semibold">"Quanto tenho de leite condensado no armário?"</p>
+            </div>
+            <div className="bg-white p-2.5 rounded-xl border border-[#ead8cf]">
+              <span className="font-bold text-[#5b382d] block mb-0.5">📅 Agenda & Compromissos:</span>
+              <p className="italic font-semibold">"Agendar reunião com fornecedor na sexta às 14h"</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Feed do Chat */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#fffcf9]/30">

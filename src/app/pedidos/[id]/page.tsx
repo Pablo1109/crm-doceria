@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MessageCircle } from "lucide-react";
+import { ArrowLeft, MessageCircle, Edit } from "lucide-react";
 import PrintButton from "@/components/PrintButton";
 import Toast from "@/components/Toast";
 
@@ -24,7 +24,11 @@ export default async function PedidoDetalhePage({ params, searchParams }: { para
   <Toast type={sp?.success} />
   <div className="flex flex-col gap-3 print:hidden md:flex-row md:items-center md:justify-between">
     <Link href="/pedidos" className="inline-flex items-center text-sm font-black text-[#8b6a5d] hover:text-[#c98b9b]"><ArrowLeft className="mr-2 h-4 w-4"/>Voltar</Link>
-    <div className="flex gap-2"><PrintButton />{phone&&<a href={`https://wa.me/55${phone}?text=${message}`} target="_blank" className="inline-flex items-center rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-black text-white shadow-sm"><MessageCircle className="mr-2 h-4 w-4"/>WhatsApp</a>}</div>
+    <div className="flex gap-2">
+      <Link href={`/pedidos/edit/${order.id}`} className="inline-flex items-center rounded-2xl bg-[#5b382d] px-4 py-3 text-sm font-black text-white shadow-sm hover:bg-[#c98b9b]"><Edit className="mr-2 h-4 w-4"/>Editar Pedido</Link>
+      <PrintButton />
+      {phone&&<a href={`https://wa.me/55${phone}?text=${message}`} target="_blank" className="inline-flex items-center rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-black text-white shadow-sm"><MessageCircle className="mr-2 h-4 w-4"/>WhatsApp</a>}
+    </div>
   </div>
 
   <section className="relative overflow-hidden rounded-[2rem] bg-[#fff8ef] p-8 shadow-sm ring-1 ring-[#ead8cf] print:rounded-none print:shadow-none print:ring-0">
